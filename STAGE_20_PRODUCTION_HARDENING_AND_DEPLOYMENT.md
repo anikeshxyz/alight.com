@@ -29,7 +29,7 @@ Stage 20 represents the final milestone of the **20-Stage Production Upgrade** f
 ## 2. Platform Architecture & Production Infrastructure
 
 ### 2.1 Technology Stack & Versions
-- **Backend**: Java 21 LTS, Spring Boot 3.3.4, Spring Security 6 (JWT / stateless auth), Spring Data JPA / Hibernate 6, Liquibase / Flyway.
+- **Backend**: Java 25 LTS, Spring Boot 3.3.4, Spring Security 6 (JWT / stateless auth), Spring Data JPA / Hibernate 6, Liquibase / Flyway.
 - **Database**: PostgreSQL 16 with JSONB indexing and UUID primary keys (`gen_random_uuid()`).
 - **Cache & Messaging**: Redis for session cache and distributed locks; asynchronous Spring Events.
 - **Observability**: Spring Boot Actuator (`/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`), Micrometer, SLF4J MDC structured logging.

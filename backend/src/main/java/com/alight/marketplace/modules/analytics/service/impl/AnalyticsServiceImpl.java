@@ -136,7 +136,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         topVendors.sort((a, b) -> b.getGrossSales().compareTo(a.getGrossSales()));
 
         long activeVendors = vendors.stream()
-                .filter(v -> v.getStatus() == VendorStatus.ACTIVE)
+                .filter(v -> v.getStatus() == VendorStatus.APPROVED)
                 .count();
 
         return AdminAnalyticsOverviewDTO.builder()
@@ -187,7 +187,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         double fulfillmentRate = vendorOrders.isEmpty() ? 0.0 : ((double) fulfilledCount / vendorOrders.size()) * 100.0;
 
         long returnCount = rmaRequestRepository.countByVendorIdAndStatus(vendorId, RmaStatus.APPROVED)
-                + rmaRequestRepository.countByVendorIdAndStatus(vendorId, RmaStatus.REFUNDED);
+                + rmaRequestRepository.countByVendorIdAndStatus(vendorId, RmaStatus.REFUND_PROCESSED);
         double returnRate = vendorOrders.isEmpty() ? 0.0 : ((double) returnCount / vendorOrders.size()) * 100.0;
 
         Double avgRating = reviewRepository.getAverageRatingForVendor(vendorId);

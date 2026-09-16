@@ -5,7 +5,7 @@ Alight International Multi-Vendor Marketplace is a high-performance, production-
 
 ## Architecture
 The application is designed as a **Modular Monolith**:
-- **Backend**: Java 21 LTS, Spring Boot 3.3.x, Spring Security, Spring Data JPA, Flyway migrations, PostgreSQL.
+- **Backend**: Java 25 LTS, Spring Boot 3.3.x, Spring Security, Spring Data JPA, Flyway migrations, PostgreSQL.
 - **Frontend**: Next.js (App Router), React, TypeScript, Tailwind CSS, Centralized API Client.
 - **API Standard**: RESTful `/api/v1/*` endpoints with unified JSON responses and error structures.
 
@@ -39,7 +39,7 @@ alight.com/
 ```
 
 ## Prerequisites
-- **Java 21 LTS** or newer
+- **Java 25 LTS** or newer
 - **Maven 3.9+**
 - **Node.js 20+** & **npm 10+**
 - **PostgreSQL 15+** or **Docker**
@@ -83,7 +83,7 @@ npm run dev
 - **Stage 2**: Database / ERD *(71 tables, Flyway migrations V1–V30, PostgreSQL 18, automated updated_at triggers, pg_trgm search GIN indexes, @Version optimistic locking)*
 - **Stage 3**: RBAC & Permission Matrix *(4-Tier Roles: Customer, Vendor, Admin, Super Admin; 45 granular permissions, JWT embedded permissions, ResourceSecurityService multi-tenant isolation, Admin RBAC management APIs)*
 - **Stage 4**: API Specification & Documentation *(Production OpenAPI 3.0, Multi-Environment Servers, BearerAuth JWT, 6 Grouped Swagger UI Modules, STAGE_4_API_SPECIFICATION.md manual on `/swagger-ui.html`)*
-- **Stage 5**: Backend Modular Monolith *(Spring Boot 3.3.4, Java 21 LTS, 28 Domain Modules, In-Memory Domain Event Bus, ThreadPoolTaskExecutor with MDC Correlation, PagedResponse & 409 Conflict Handling)*
+- **Stage 5**: Backend Modular Monolith *(Spring Boot 3.3.4, Java 25 LTS, 28 Domain Modules, In-Memory Domain Event Bus, ThreadPoolTaskExecutor with MDC Correlation, PagedResponse & 409 Conflict Handling)*
 - **Stage 6**: Authentication & Session Management *(JWT, refresh tokens, BCrypt hashing)*
 - **Stage 7**: Vendor Management *(Registration, KYC verification, Admin approvals, status transitions)*
 - **Stage 8**: Product Catalog *(Modular kitchen, wardrobe, bathroom hardware; hierarchical categories, variants)*

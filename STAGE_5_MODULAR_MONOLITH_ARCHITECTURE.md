@@ -1,7 +1,7 @@
 # Stage 5: Production Modular Monolith Architecture Specification
 **Alight International Multi-Vendor Marketplace**  
 *Document Version:* 5.0.0 (Production-Ready)  
-*Runtime Platform:* Java 21 LTS | Spring Boot 3.3.4 | Spring Data JPA | Spring Security 6  
+*Runtime Platform:* Java 25 LTS | Spring Boot 3.3.4 | Spring Data JPA | Spring Security 6
 *Architecture Pattern:* Modular Monolith with Asynchronous In-Memory Domain Event Bus  
 
 ---
