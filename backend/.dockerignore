@@ -1,0 +1,10 @@
+target/
+pgdata/
+uploads/
+.git/
+.gitignore
+*.log
+.mvn/
+run-backend.bat
+run-backend.ps1
+

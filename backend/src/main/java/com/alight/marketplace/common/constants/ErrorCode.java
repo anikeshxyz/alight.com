@@ -1,0 +1,13 @@
+package com.alight.marketplace.common.constants;
+
+public enum ErrorCode {
+    VALIDATION_ERROR,
+    RESOURCE_NOT_FOUND,
+    UNAUTHORIZED,
+    FORBIDDEN,
+    DUPLICATE_RESOURCE,
+    BUSINESS_RULE_VIOLATION,
+    CONFLICT,
+    OPTIMISTIC_LOCK_CONFLICT,
+    INTERNAL_SERVER_ERROR
+}

@@ -1,0 +1,63 @@
+
+services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: alight-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alight_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Aahankumar1@
+    ports:
+      - "5432:5432"
+    volumes:
+      - alight_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d alight_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2. Spring Boot Backend
+  backend:
+    container_name: alight-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/alight_db
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: Aahankumar1@
+      HIBERNATE_DDL_AUTO: update
+      FLYWAY_ENABLED: "false"
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 3. Next.js Frontend
+  frontend:
+    container_name: alight-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api/v1
+        BACKEND_URL: http://backend:8080
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      BACKEND_URL: http://backend:8080
+      NEXT_PUBLIC_API_URL: /api/v1
+      NODE_ENV: production
+    depends_on:
+      - backend
+
+volumes:
+  alight_postgres_data:
