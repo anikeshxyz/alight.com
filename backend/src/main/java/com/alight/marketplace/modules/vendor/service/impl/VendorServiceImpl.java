@@ -46,46 +46,58 @@ public class VendorServiceImpl implements VendorService {
     @Transactional
     public VendorResponseDto applyAsVendor(String userEmail, VendorApplicationRequest request) {
         User user = findUserByEmail(userEmail);
+        String requestedStoreName = request.getStoreName().trim();
 
-        if (vendorRepository.existsByUserId(user.getId())) {
-            throw new DuplicateResourceException("A vendor application or store already exists for this account");
+        java.util.Optional<Vendor> existingOpt = vendorRepository.findByUserId(user.getId());
+        Vendor vendor;
+
+        if (existingOpt.isPresent()) {
+            vendor = existingOpt.get();
+            if (!vendor.getStoreName().equalsIgnoreCase(requestedStoreName)) {
+                if (vendorRepository.existsByStoreName(requestedStoreName)) {
+                    throw new DuplicateResourceException("Store name is already taken: " + request.getStoreName());
+                }
+                vendor.setStoreName(requestedStoreName);
+                vendor.setSlug(generateUniqueSlug(requestedStoreName));
+            }
+        } else {
+            if (vendorRepository.existsByStoreName(requestedStoreName)) {
+                throw new DuplicateResourceException("Store name is already taken: " + request.getStoreName());
+            }
+            String slug = generateUniqueSlug(requestedStoreName);
+            vendor = Vendor.builder()
+                    .user(user)
+                    .storeName(requestedStoreName)
+                    .slug(slug)
+                    .commissionPercentage(new BigDecimal("10.00"))
+                    .vacationMode(false)
+                    .autoAcceptOrders(false)
+                    .minimumOrderAmount(BigDecimal.ZERO)
+                    .build();
         }
 
-        if (vendorRepository.existsByStoreName(request.getStoreName().trim())) {
-            throw new DuplicateResourceException("Store name is already taken: " + request.getStoreName());
+        vendor.setDescription(request.getDescription());
+        vendor.setLogoUrl(request.getLogoUrl());
+        vendor.setBannerUrl(request.getBannerUrl());
+        vendor.setSupportEmail(request.getSupportEmail().trim().toLowerCase(Locale.ROOT));
+        vendor.setSupportPhone(request.getSupportPhone().trim());
+        vendor.setStatus(VendorStatus.PENDING_VERIFICATION);
+        vendor.setOnboardingStep("STEP_5_COMPLETED");
+        vendor.setRejectionReason(null);
+
+        VendorBusinessDetails businessDetails = vendor.getBusinessDetails();
+        if (businessDetails == null) {
+            businessDetails = VendorBusinessDetails.builder().vendor(vendor).build();
         }
-
-        String slug = generateUniqueSlug(request.getStoreName());
-
-        Vendor vendor = Vendor.builder()
-                .user(user)
-                .storeName(request.getStoreName().trim())
-                .slug(slug)
-                .description(request.getDescription())
-                .logoUrl(request.getLogoUrl())
-                .bannerUrl(request.getBannerUrl())
-                .supportEmail(request.getSupportEmail().trim().toLowerCase(Locale.ROOT))
-                .supportPhone(request.getSupportPhone().trim())
-                .commissionPercentage(new BigDecimal("10.00"))
-                .status(VendorStatus.PENDING_VERIFICATION)
-                .onboardingStep("STEP_5_COMPLETED")
-                .vacationMode(false)
-                .autoAcceptOrders(false)
-                .minimumOrderAmount(BigDecimal.ZERO)
-                .build();
-
-        VendorBusinessDetails businessDetails = VendorBusinessDetails.builder()
-                .vendor(vendor)
-                .legalBusinessName(request.getLegalBusinessName().trim())
-                .businessType(request.getBusinessType())
-                .taxIdGstin(request.getTaxIdGstin() != null ? request.getTaxIdGstin().trim() : null)
-                .panNumber(request.getPanNumber() != null ? request.getPanNumber().trim() : null)
-                .bankAccountNumber(request.getBankAccountNumber().trim())
-                .bankIfscCode(request.getBankIfscCode().trim().toUpperCase(Locale.ROOT))
-                .bankName(request.getBankName().trim())
-                .bankAccountHolderName(request.getBankAccountHolderName().trim())
-                .verified(false)
-                .build();
+        businessDetails.setLegalBusinessName(request.getLegalBusinessName().trim());
+        businessDetails.setBusinessType(request.getBusinessType());
+        businessDetails.setTaxIdGstin(request.getTaxIdGstin() != null ? request.getTaxIdGstin().trim() : null);
+        businessDetails.setPanNumber(request.getPanNumber() != null ? request.getPanNumber().trim() : null);
+        businessDetails.setBankAccountNumber(request.getBankAccountNumber().trim());
+        businessDetails.setBankIfscCode(request.getBankIfscCode().trim().toUpperCase(Locale.ROOT));
+        businessDetails.setBankName(request.getBankName().trim());
+        businessDetails.setBankAccountHolderName(request.getBankAccountHolderName().trim());
+        businessDetails.setVerified(false);
         vendor.setBusinessDetails(businessDetails);
 
         VendorPickupAddress pickupAddress = VendorPickupAddress.builder()
@@ -101,9 +113,11 @@ public class VendorServiceImpl implements VendorService {
                 .primary(true)
                 .build();
 
-        List<VendorPickupAddress> pickupList = new ArrayList<>();
-        pickupList.add(pickupAddress);
-        vendor.setPickupAddresses(pickupList);
+        if (vendor.getPickupAddresses() == null) {
+            vendor.setPickupAddresses(new ArrayList<>());
+        }
+        vendor.getPickupAddresses().clear();
+        vendor.getPickupAddresses().add(pickupAddress);
 
         Vendor saved = vendorRepository.save(vendor);
         log.info("Vendor application submitted successfully for user: {}, vendor ID: {}", userEmail, saved.getId());
@@ -188,11 +202,28 @@ public class VendorServiceImpl implements VendorService {
     public VendorBusinessDetailsDto updateKycDocuments(String userEmail, UpdateKycDocumentsRequest request) {
         Vendor vendor = findVendorByUserEmail(userEmail);
         VendorBusinessDetails details = businessDetailsRepository.findByVendorId(vendor.getId())
-                .orElseGet(() -> VendorBusinessDetails.builder().vendor(vendor).build());
+                .orElseGet(() -> {
+                    VendorBusinessDetails newDetails = VendorBusinessDetails.builder().vendor(vendor).build();
+                    vendor.setBusinessDetails(newDetails);
+                    return newDetails;
+                });
 
-        details.setBusinessLicenseUrl(request.getBusinessLicenseUrl());
-        details.setTaxCertificateUrl(request.getTaxCertificateUrl());
-        details.setIdProofUrl(request.getIdProofUrl());
+        if (request.getBusinessLicenseUrl() != null && !request.getBusinessLicenseUrl().trim().isEmpty()) {
+            details.setBusinessLicenseUrl(request.getBusinessLicenseUrl().trim());
+        }
+        if (request.getTaxCertificateUrl() != null && !request.getTaxCertificateUrl().trim().isEmpty()) {
+            details.setTaxCertificateUrl(request.getTaxCertificateUrl().trim());
+        }
+        if (request.getIdProofUrl() != null && !request.getIdProofUrl().trim().isEmpty()) {
+            details.setIdProofUrl(request.getIdProofUrl().trim());
+        }
+
+        // If vendor was previously rejected or draft, re-submission moves them back to PENDING_VERIFICATION
+        if (vendor.getStatus() == VendorStatus.REJECTED || vendor.getStatus() == VendorStatus.DRAFT) {
+            vendor.setStatus(VendorStatus.PENDING_VERIFICATION);
+            vendor.setRejectionReason(null);
+            vendorRepository.save(vendor);
+        }
 
         VendorBusinessDetails saved = businessDetailsRepository.save(details);
         log.info("Updated KYC verification documents for vendor ID: {}", vendor.getId());

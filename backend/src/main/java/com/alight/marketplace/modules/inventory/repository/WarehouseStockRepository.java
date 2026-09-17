@@ -56,6 +56,9 @@ public interface WarehouseStockRepository extends JpaRepository<WarehouseStock, 
     @Query("SELECT ws FROM WarehouseStock ws WHERE ws.warehouse.vendor.id = :vendorId AND (ws.quantityOnHand - ws.quantityReserved) <= ws.reorderThreshold")
     List<WarehouseStock> findLowStockAlertsByVendorId(@Param("vendorId") UUID vendorId);
 
+    @Query("SELECT ws FROM WarehouseStock ws WHERE ws.warehouse.vendor.id = :vendorId AND (ws.quantityOnHand - ws.quantityReserved) <= 0")
+    List<WarehouseStock> findOutOfStockAlertsByVendorId(@Param("vendorId") UUID vendorId);
+
     @Query("SELECT ws FROM WarehouseStock ws WHERE (ws.quantityOnHand - ws.quantityReserved) <= ws.reorderThreshold")
     List<WarehouseStock> findAllLowStockAlerts();
 }

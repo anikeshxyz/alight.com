@@ -18,6 +18,7 @@ import {
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadDropzone } from "@/components/ui/ImageUploadDropzone";
+import { useAuth } from "@/context/AuthContext";
 import {
   getPublicCategoryTreeApi,
   getActiveBrandsApi,
@@ -34,6 +35,7 @@ import {
 
 export default function NewProductPage() {
   const router = useRouter();
+  const { user, token: contextToken, isVendor } = useAuth();
   const [flatCategories, setFlatCategories] = useState<{ id: string; name: string; level: number }[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -211,7 +213,15 @@ export default function NewProductPage() {
     };
 
     try {
+      if (user && !isVendor) {
+        setErrorMessage(
+          `Cannot create product: You are currently signed in as ${user.email} (Administrator), not a registered seller. Please sign into your seller account (e.g. anik@gmail.com). To use both Admin and Seller portals at once, open the Admin Console in a Private / Incognito window.`
+        );
+        return;
+      }
+
       const token =
+        contextToken ||
         localStorage.getItem("alight_token") ||
         localStorage.getItem("alight_access_token") ||
         localStorage.getItem("token") ||
@@ -220,11 +230,19 @@ export default function NewProductPage() {
       if (res.success) {
         router.push("/vendor/products");
       } else {
-        setErrorMessage(res.message || "Failed to create product");
+        let msg = res.message || "Failed to create product";
+        if (msg.toLowerCase().includes("vendor account not found")) {
+          msg = `${msg}. Your active session (${user?.email || "current account"}) is not a registered seller. If you logged into the Admin Panel in another tab, your browser session was switched to Administrator. Please sign back into your seller account or use a Private/Incognito window for the Admin Panel.`;
+        }
+        setErrorMessage(msg);
       }
     } catch (err: unknown) {
       const e = err as { message?: string };
-      setErrorMessage(e.message || "An unexpected error occurred.");
+      let msg = e.message || "An unexpected error occurred.";
+      if (msg.toLowerCase().includes("vendor account not found")) {
+        msg = `${msg}. Your active session (${user?.email || "current account"}) is not a registered seller. If you logged into the Admin Panel in another tab, your browser session was switched to Administrator. Please sign back into your seller account or use a Private/Incognito window for the Admin Panel.`;
+      }
+      setErrorMessage(msg);
     } finally {
       setSubmitting(false);
     }
@@ -258,6 +276,25 @@ export default function NewProductPage() {
           </Button>
         </div>
       </div>
+
+      {user && !isVendor && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-amber-900 text-xs">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-semibold text-sm text-amber-950">
+              Signed in as Administrator ({user.email})
+            </p>
+            <p>
+              Product creation requires an approved seller account. You cannot create a product under an Administrator profile.
+            </p>
+            <p className="text-amber-800">
+              👉 If you registered a seller such as <strong>raj anik (anik@gmail.com)</strong>, please switch to that account to add products.
+              <br />
+              💡 <em>Pro-Tip: Log into the Admin Console in a <strong>Private / Incognito window</strong> so both your Seller and Admin sessions remain active at the same time without overriding each other.</em>
+            </p>
+          </div>
+        </div>
+      )}
 
       {errorMessage && (
         <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-800 text-xs">

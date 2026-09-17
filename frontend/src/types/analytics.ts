@@ -2,6 +2,7 @@ export interface RevenueTrajectory {
   periodLabel: string;
   gmv: number;
   netCommission: number;
+  netSettlement?: number;
   orderCount: number;
 }
 
@@ -37,16 +38,43 @@ export interface AdminAnalyticsOverview {
   topVendors: VendorLeaderboard[];
 }
 
+export interface VendorTopProduct {
+  productId: string;
+  title: string;
+  sku: string;
+  categoryName: string;
+  imageUrl?: string;
+  unitsSold: number;
+  revenue: number;
+  stockQuantity: number;
+  status: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+}
+
 export interface VendorAnalyticsOverview {
+  range?: "7d" | "30d" | "90d" | string;
   totalGrossSales: number;
+  grossSalesDelta?: number | null;
   netEarnings: number;
   totalCommissionPaid: number;
   totalTcsDeducted: number;
   pendingEscrow: number;
   availableBalance: number;
   totalOrdersCount: number;
-  fulfillmentRate: number;
-  returnRate: number;
-  averageRating: number;
+  orderVolumeDelta?: number | null;
+  fulfillmentRate?: number | null;
+  returnRate?: number | null;
+  cancellationRate?: number | null;
+  averageRating?: number | null;
+
+  // Real operational counts across store
+  awaitingDispatchCount?: number | null;
+  activeShipmentsCount?: number | null;
+  lowStockCount?: number | null;
+  pendingRmaCount?: number | null;
+  pendingQuoteCount?: number | null;
+
+  // Real top selling products
+  topProducts?: VendorTopProduct[];
+
   monthlySales: RevenueTrajectory[];
 }

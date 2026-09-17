@@ -6,6 +6,9 @@ export async function getAdminAnalyticsOverviewApi(): Promise<ApiResponse<AdminA
   return apiClient<AdminAnalyticsOverview>('/admin/analytics/overview');
 }
 
-export async function getVendorAnalyticsOverviewApi(): Promise<ApiResponse<VendorAnalyticsOverview>> {
-  return apiClient<VendorAnalyticsOverview>('/vendor/analytics/overview');
+export async function getVendorAnalyticsOverviewApi(
+  range = "30d"
+): Promise<ApiResponse<VendorAnalyticsOverview>> {
+  const query = range ? `?range=${encodeURIComponent(range)}` : "";
+  return apiClient<VendorAnalyticsOverview>(`/vendor/analytics/overview${query}`);
 }

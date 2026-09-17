@@ -110,7 +110,7 @@ export default function VendorAnalyticsPage() {
           </div>
           <div className="mt-2.5">
             <span className="text-2xl font-black text-brand-slate-900">
-              {data ? data.fulfillmentRate.toFixed(1) : "0.0"}%
+              {data && data.fulfillmentRate !== null && data.fulfillmentRate !== undefined ? `${data.fulfillmentRate.toFixed(1)}%` : "N/A"}
             </span>
             <p className="text-[11px] text-brand-slate-500 mt-1">SLA Benchmark: 95.0%</p>
           </div>
@@ -140,7 +140,7 @@ export default function VendorAnalyticsPage() {
           </div>
           <div className="mt-2.5">
             <span className="text-2xl font-black text-brand-slate-900">
-              {data && data.averageRating > 0 ? `${data.averageRating.toFixed(1)} / 5.0` : "No ratings yet"}
+              {data && data.averageRating != null && data.averageRating > 0 ? `${data.averageRating.toFixed(1)} / 5.0` : "No ratings yet"}
             </span>
             <p className="text-[11px] text-amber-700 font-semibold mt-1">Direct Verified Buyer Feedback</p>
           </div>

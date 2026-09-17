@@ -36,3 +36,6 @@ Thumbs.db
 # Testcontainers / Docker volumes
 docker/data/
 backend/pgdata/
+
+# Local Scratch
+brain/

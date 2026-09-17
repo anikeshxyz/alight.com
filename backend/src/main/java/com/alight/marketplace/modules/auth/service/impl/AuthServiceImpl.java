@@ -47,6 +47,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
+    private final com.alight.marketplace.modules.vendor.repository.VendorRepository vendorRepository;
 
     @Override
     @Transactional
@@ -79,6 +80,49 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
         log.info("Registered new user with email: {} and role: {}", savedUser.getEmail(), targetRoleName);
+
+        // Auto-provision initial pending vendor entity if registered as VENDOR
+        if ("VENDOR".equalsIgnoreCase(request.getAccountType())) {
+            String baseStoreName = request.getFirstName().trim() + " " + request.getLastName().trim() + " Store";
+            String storeName = baseStoreName;
+            int counter = 1;
+            while (vendorRepository.existsByStoreName(storeName)) {
+                storeName = baseStoreName + " " + counter++;
+            }
+            String baseSlug = storeName.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+            String slug = (baseSlug.isEmpty() ? "vendor" : baseSlug) + "-" + UUID.randomUUID().toString().substring(0, 6);
+
+            com.alight.marketplace.modules.vendor.entity.Vendor vendor = com.alight.marketplace.modules.vendor.entity.Vendor.builder()
+                    .user(savedUser)
+                    .storeName(storeName)
+                    .slug(slug)
+                    .description("Newly registered vendor store")
+                    .supportEmail(savedUser.getEmail())
+                    .supportPhone(savedUser.getPhone() != null ? savedUser.getPhone() : "")
+                    .commissionPercentage(new java.math.BigDecimal("10.00"))
+                    .status(com.alight.marketplace.modules.vendor.entity.VendorStatus.PENDING_VERIFICATION)
+                    .onboardingStep("STEP_1_REGISTERED")
+                    .vacationMode(false)
+                    .autoAcceptOrders(false)
+                    .minimumOrderAmount(java.math.BigDecimal.ZERO)
+                    .build();
+
+            com.alight.marketplace.modules.vendor.entity.VendorBusinessDetails businessDetails = com.alight.marketplace.modules.vendor.entity.VendorBusinessDetails.builder()
+                    .vendor(vendor)
+                    .legalBusinessName(request.getFirstName().trim() + " " + request.getLastName().trim())
+                    .businessType(com.alight.marketplace.modules.vendor.entity.BusinessType.INDIVIDUAL)
+                    .bankAccountNumber("PENDING")
+                    .bankIfscCode("PENDING")
+                    .bankName("Pending Bank Verification")
+                    .bankAccountHolderName(request.getFirstName().trim() + " " + request.getLastName().trim())
+                    .verified(false)
+                    .build();
+            vendor.setBusinessDetails(businessDetails);
+
+            com.alight.marketplace.modules.vendor.entity.Vendor savedVendor = vendorRepository.save(vendor);
+            log.info("Auto-provisioned pending vendor store for newly registered user {}: storeName={}, vendorId={}",
+                    savedUser.getEmail(), savedVendor.getStoreName(), savedVendor.getId());
+        }
 
         // Generate email verification token for the newly registered user
         createEmailVerificationToken(savedUser);

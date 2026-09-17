@@ -138,7 +138,7 @@ class VendorServiceTest {
                 .build();
 
         when(userRepository.findByEmail("seller@alight.com")).thenReturn(Optional.of(sampleUser));
-        when(vendorRepository.existsByUserId(sampleUser.getId())).thenReturn(false);
+        when(vendorRepository.findByUserId(sampleUser.getId())).thenReturn(Optional.empty());
         when(vendorRepository.existsByStoreName("Alight Direct Electronics")).thenReturn(false);
         when(vendorRepository.existsBySlug("alight-direct-electronics")).thenReturn(false);
         when(vendorRepository.save(any(Vendor.class))).thenReturn(sampleVendor);
@@ -159,7 +159,7 @@ class VendorServiceTest {
                 .build();
 
         when(userRepository.findByEmail("seller@alight.com")).thenReturn(Optional.of(sampleUser));
-        when(vendorRepository.existsByUserId(sampleUser.getId())).thenReturn(false);
+        when(vendorRepository.findByUserId(sampleUser.getId())).thenReturn(Optional.empty());
         when(vendorRepository.existsByStoreName("Alight Direct Electronics")).thenReturn(true);
 
         assertThrows(DuplicateResourceException.class, () ->

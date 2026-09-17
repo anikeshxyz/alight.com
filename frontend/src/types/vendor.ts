@@ -22,6 +22,9 @@ export interface VendorBusinessDetails {
   bankIfscCode: string;
   bankName: string;
   bankAccountHolderName: string;
+  businessLicenseUrl?: string;
+  taxCertificateUrl?: string;
+  idProofUrl?: string;
   verified: boolean;
   createdAt: string;
   updatedAt: string;
@@ -117,6 +120,15 @@ export interface UpdateBusinessDetailsPayload {
   bankIfscCode: string;
   bankName: string;
   bankAccountHolderName: string;
+  businessLicenseUrl?: string;
+  taxCertificateUrl?: string;
+  idProofUrl?: string;
+}
+
+export interface UpdateKycDocumentsPayload {
+  businessLicenseUrl?: string;
+  taxCertificateUrl?: string;
+  idProofUrl?: string;
 }
 
 export interface CreatePickupAddressPayload {
