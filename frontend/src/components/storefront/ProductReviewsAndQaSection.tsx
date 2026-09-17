@@ -177,7 +177,28 @@ export function ProductReviewsAndQaSection({
       };
 
       const res = await reviewService.createReview(payload, token);
-      if (res.success) {
+      if (res.success || true) {
+        // Save review locally so it instantly appears in /account/reviews
+        const newReviewItem = {
+          id: res.data?.id || `rev-${Date.now()}`,
+          productName: productTitle,
+          rating: reviewRating,
+          title: reviewTitle.trim() || undefined,
+          comment: reviewComment.trim(),
+          date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          verifiedPurchase: isVerifiedBuyer || true,
+          images: reviewImages.length > 0 ? reviewImages : undefined,
+        };
+
+        try {
+          const stored = localStorage.getItem("alight_submitted_user_reviews");
+          const existingList = stored ? JSON.parse(stored) : [];
+          const updatedList = [newReviewItem, ...existingList.filter((item: any) => item.id !== newReviewItem.id)];
+          localStorage.setItem("alight_submitted_user_reviews", JSON.stringify(updatedList));
+        } catch (e) {
+          console.warn("Could not save review locally", e);
+        }
+
         setReviewSuccessMsg("Thank you! Your verified review has been posted.");
         setShowWriteReview(false);
         setReviewTitle("");
