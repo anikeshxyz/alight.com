@@ -1,7 +1,7 @@
 # Alight International Marketplace: Final Production Readiness Report
 
 ## Executive Summary
-The **Alight International Multi-Vendor Marketplace** has completed its comprehensive 20-Stage Production Upgrade. The platform is an enterprise-grade, high-performance, resilient modular monolith built on **Java 21 LTS**, **Spring Boot 3.3.4**, and **PostgreSQL 16**.
+The **Alight International Multi-Vendor Marketplace** has completed its comprehensive 20-Stage Production Upgrade. The platform is an enterprise-grade, high-performance, resilient modular monolith built on **Java 25 LTS**, **Spring Boot 3.3.4**, and **PostgreSQL 16**.
 
 ---
 

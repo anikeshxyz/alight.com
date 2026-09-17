@@ -171,12 +171,56 @@ function CheckoutContent() {
     setCouponMessage(null);
   };
 
+  const handlePhoneInputChange = (rawVal: string, isShipping: boolean) => {
+    // Strip all non-digit characters except leading '+'
+    let cleaned = rawVal.replace(/[^\d+]/g, "");
+
+    // Extract digits only
+    const digitsOnly = cleaned.replace(/\D/g, "");
+
+    // Calculate core digits (excluding 91 prefix if length > 10)
+    let coreDigits = digitsOnly;
+    if (digitsOnly.startsWith("91") && digitsOnly.length > 10) {
+      coreDigits = digitsOnly.slice(2);
+    } else if (digitsOnly.startsWith("0") && digitsOnly.length > 10) {
+      coreDigits = digitsOnly.slice(1);
+    }
+
+    if (coreDigits.length > 10) {
+      alert("Invalid Mobile Number! Mobile number cannot exceed 10 digits.");
+      const maxLen = cleaned.startsWith("+91") ? 13 : cleaned.startsWith("+") ? 11 : 10;
+      cleaned = cleaned.slice(0, maxLen);
+    }
+
+    if (isShipping) {
+      setShippingAddress((prev) => ({ ...prev, phone: cleaned }));
+    } else {
+      setBillingAddress((prev) => ({ ...prev, phone: cleaned }));
+    }
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
     if (!shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.addressLine1 || !shippingAddress.postalCode) {
       setErrorMessage("Please fill in all mandatory shipping address fields.");
+      return;
+    }
+
+    // Strict Phone Number Validation
+    const rawPhone = shippingAddress.phone || "";
+    const phoneDigitsOnly = rawPhone.replace(/\D/g, "");
+    let corePhoneDigits = phoneDigitsOnly;
+    if (phoneDigitsOnly.startsWith("91") && phoneDigitsOnly.length > 10) {
+      corePhoneDigits = phoneDigitsOnly.slice(2);
+    } else if (phoneDigitsOnly.startsWith("0") && phoneDigitsOnly.length > 10) {
+      corePhoneDigits = phoneDigitsOnly.slice(1);
+    }
+
+    if (/[a-zA-Z]/.test(rawPhone) || corePhoneDigits.length !== 10) {
+      alert("Invalid Mobile Number! Mobile number must be exactly 10 digits and cannot contain letters.");
+      setErrorMessage("Invalid Mobile Number! Please enter a valid 10-digit mobile number (e.g. +91 9876543210).");
       return;
     }
 
@@ -436,9 +480,8 @@ function CheckoutContent() {
                   type="tel"
                   required
                   value={shippingAddress.phone}
-                  onChange={(e) =>
-                    setShippingAddress({ ...shippingAddress, phone: e.target.value })
-                  }
+                  onChange={(e) => handlePhoneInputChange(e.target.value, true)}
+                  maxLength={15}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-brand-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-emerald-800/20 focus:border-brand-emerald-800"
                   placeholder="+91 9876543210"
                 />

@@ -1,5 +1,5 @@
-# Stage 1: Build JAR using Maven and Java 21
-FROM maven:3.9.8-eclipse-temurin-21-alpine AS builder
+# Stage 1: Build JAR using Maven and Java 25
+FROM maven:3.9.8-eclipse-temurin-25-alpine AS builder
 WORKDIR /app
 
 # Cache dependencies
@@ -11,7 +11,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # Stage 2: Minimal runtime image
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
 # Create unprivileged user and directories

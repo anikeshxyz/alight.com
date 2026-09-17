@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Heart, Package, Trash2, ShoppingCart, ArrowRight, Sparkles, Store, Check, ArrowUpRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Heart, Package, Trash2, ShoppingCart, ArrowRight, Sparkles, Store, Check, ArrowUpRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -12,10 +13,12 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { getProductBySlugApi } from "@/services/product-service";
 
 export default function WishlistPage() {
+  const router = useRouter();
   const { wishlistProducts, wishlistCount, removeFromWishlist, clearWishlist, isLoading } = useWishlist();
   const { addToCart } = useCart();
   const { formatMoney } = useCurrency();
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [buyingId, setBuyingId] = useState<string | null>(null);
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [movingAll, setMovingAll] = useState(false);
 
@@ -41,6 +44,31 @@ export default function WishlistPage() {
       console.error("Failed to add wishlisted item to cart", err);
     } finally {
       setAddingId(null);
+    }
+  };
+
+  const handleBuyNow = async (product: any) => {
+    setBuyingId(product.id);
+    try {
+      let variantId = product.variantId;
+      if (!variantId && product.slug) {
+        const res = await getProductBySlugApi(product.slug);
+        if (res.success && res.data && res.data.variants && res.data.variants.length > 0) {
+          variantId = res.data.variants[0].id;
+        }
+      }
+
+      if (variantId) {
+        await addToCart(variantId, 1);
+        await removeFromWishlist(product.id);
+        router.push("/checkout");
+      } else if (product.slug) {
+        window.location.href = `/products/${product.slug}`;
+      }
+    } catch (err) {
+      console.error("Failed to process buy now from wishlist", err);
+    } finally {
+      setBuyingId(null);
     }
   };
 
@@ -155,6 +183,7 @@ export default function WishlistPage() {
             const hasDiscount = p.discountPrice && p.discountPrice < (p.basePrice || 0);
             const isAdded = addedIds.has(p.id);
             const isAdding = addingId === p.id;
+            const isBuying = buyingId === p.id;
 
             return (
               <Card
@@ -223,7 +252,7 @@ export default function WishlistPage() {
                     )}
                   </div>
 
-                  {/* Pricing & Add-to-cart */}
+                  {/* Pricing & Action Buttons */}
                   <div className="space-y-2.5 pt-2 border-t border-brand-slate-100">
                     <div className="flex items-baseline gap-2">
                       <span className="text-base font-extrabold text-brand-slate-900">
@@ -236,32 +265,54 @@ export default function WishlistPage() {
                       )}
                     </div>
 
-                    <Button
-                      variant={isAdded ? "outline" : "primary"}
-                      size="sm"
-                      onClick={() => handleAddToCart(p)}
-                      disabled={isAdding}
-                      className={`w-full text-xs font-bold gap-1.5 transition-all ${
-                        isAdded ? "bg-emerald-50 text-emerald-800 border-emerald-300" : ""
-                      }`}
-                    >
-                      {isAdded ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Added to Cart</span>
-                        </>
-                      ) : isAdding ? (
-                        <>
-                          <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                          <span>Adding...</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          <span>Add to Cart</span>
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleBuyNow(p)}
+                        disabled={isBuying || isAdding}
+                        className="w-full text-xs font-bold gap-1.5 shadow-sm"
+                      >
+                        {isBuying ? (
+                          <>
+                            <div className="w-3.5 h-3.5 border-2 border-brand-slate-900/40 border-t-brand-slate-900 rounded-full animate-spin" />
+                            <span>Processing Order...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5 text-brand-slate-900 fill-brand-slate-900" />
+                            <span>Buy Now</span>
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        variant={isAdded ? "outline" : "primary"}
+                        size="sm"
+                        onClick={() => handleAddToCart(p)}
+                        disabled={isAdding || isBuying}
+                        className={`w-full text-xs font-bold gap-1.5 transition-all ${
+                          isAdded ? "bg-emerald-50 text-emerald-800 border-emerald-300" : ""
+                        }`}
+                      >
+                        {isAdded ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Added to Cart</span>
+                          </>
+                        ) : isAdding ? (
+                          <>
+                            <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            <span>Adding to Cart...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            <span>Add to Cart</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>

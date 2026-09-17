@@ -341,7 +341,23 @@ export default function CustomerAddressesPage() {
                   type="tel"
                   required
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    let cleaned = e.target.value.replace(/[^\d+]/g, "");
+                    const digitsOnly = cleaned.replace(/\D/g, "");
+                    let coreDigits = digitsOnly;
+                    if (digitsOnly.startsWith("91") && digitsOnly.length > 10) {
+                      coreDigits = digitsOnly.slice(2);
+                    } else if (digitsOnly.startsWith("0") && digitsOnly.length > 10) {
+                      coreDigits = digitsOnly.slice(1);
+                    }
+                    if (coreDigits.length > 10) {
+                      alert("Invalid Mobile Number! Mobile number cannot exceed 10 digits.");
+                      const maxLen = cleaned.startsWith("+91") ? 13 : cleaned.startsWith("+") ? 11 : 10;
+                      cleaned = cleaned.slice(0, maxLen);
+                    }
+                    setPhone(cleaned);
+                  }}
+                  maxLength={15}
                   className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-700"
                   placeholder="+91 9876543210"
                 />
