@@ -17,4 +17,5 @@ public interface QuoteRequestRepository extends JpaRepository<QuoteRequest, UUID
     long countByUserIdAndStatusIn(UUID userId, java.util.List<QuoteStatus> statuses);
     Page<QuoteRequest> findByVendorIdOrderByCreatedAtDesc(UUID vendorId, Pageable pageable);
     Page<QuoteRequest> findByVendorIdAndStatusOrderByCreatedAtDesc(UUID vendorId, QuoteStatus status, Pageable pageable);
+    long countByVendorIdAndStatus(UUID vendorId, QuoteStatus status);
 }

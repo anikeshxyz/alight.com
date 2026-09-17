@@ -268,29 +268,30 @@ export default function AdminVendorsPage() {
                           <Eye className="w-3.5 h-3.5 mr-1" /> View
                         </Button>
 
-                        {v.status === "PENDING_VERIFICATION" && (
-                          <>
-                            <button
-                              onClick={() => {
-                                setSelectedVendor(v);
-                                setActionModal("approve");
-                              }}
-                              className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                              title="Approve Vendor"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedVendor(v);
-                                setActionModal("reject");
-                              }}
-                              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                              title="Reject Vendor"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </button>
-                          </>
+                        {v.status !== "APPROVED" && (
+                          <button
+                            onClick={() => {
+                              setSelectedVendor(v);
+                              setActionModal("approve");
+                            }}
+                            className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Approve Vendor"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {v.status !== "REJECTED" && (
+                          <button
+                            onClick={() => {
+                              setSelectedVendor(v);
+                              setActionModal("reject");
+                            }}
+                            className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Reject Vendor"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
                         )}
 
                         <button
@@ -389,6 +390,51 @@ export default function AdminVendorsPage() {
                     ••••••••{selectedVendor.businessDetails.bankAccountNumber.slice(-4)}
                   </div>
                 </div>
+
+                {/* Uploaded Verification Documents */}
+                <div className="pt-2">
+                  <span className="font-semibold text-brand-slate-800 block mb-1.5">Submitted KYC Files & Proofs:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedVendor.businessDetails.taxCertificateUrl ? (
+                      <a
+                        href={selectedVendor.businessDetails.taxCertificateUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs font-semibold hover:bg-emerald-100"
+                      >
+                        <ExternalLink className="w-3 h-3" /> GST Certificate
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-brand-slate-400 bg-brand-slate-100 px-2 py-0.5 rounded">No GST File</span>
+                    )}
+
+                    {selectedVendor.businessDetails.idProofUrl ? (
+                      <a
+                        href={selectedVendor.businessDetails.idProofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs font-semibold hover:bg-emerald-100"
+                      >
+                        <ExternalLink className="w-3 h-3" /> PAN / ID Proof
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-brand-slate-400 bg-brand-slate-100 px-2 py-0.5 rounded">No PAN File</span>
+                    )}
+
+                    {selectedVendor.businessDetails.businessLicenseUrl ? (
+                      <a
+                        href={selectedVendor.businessDetails.businessLicenseUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs font-semibold hover:bg-emerald-100"
+                      >
+                        <ExternalLink className="w-3 h-3" /> Trade License
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-brand-slate-400 bg-brand-slate-100 px-2 py-0.5 rounded">No License File</span>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -415,22 +461,24 @@ export default function AdminVendorsPage() {
             )}
 
             {/* Quick Actions in View Modal */}
-            {selectedVendor.status === "PENDING_VERIFICATION" && (
-              <div className="flex justify-end gap-2 pt-4 border-t">
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              {selectedVendor.status !== "REJECTED" && (
                 <Button
                   variant="outline"
                   onClick={() => setActionModal("reject")}
                 >
                   <X className="w-4 h-4 mr-1 text-rose-600" /> Reject
                 </Button>
+              )}
+              {selectedVendor.status !== "APPROVED" && (
                 <Button
                   variant="primary"
                   onClick={() => setActionModal("approve")}
                 >
                   <Check className="w-4 h-4 mr-1" /> Approve Vendor
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
       </Modal>

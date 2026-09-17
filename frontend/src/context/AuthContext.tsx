@@ -37,11 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [roles, setRoles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const savedToken =
-      localStorage.getItem(TOKEN_STORAGE_KEY) ||
-      localStorage.getItem("alight_token") ||
-      localStorage.getItem("token");
+  const syncToken = (savedToken: string | null) => {
     if (savedToken) {
       setToken(savedToken);
       getMeApi(savedToken)
@@ -52,7 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         })
         .catch(() => {
-          // Token invalid or expired
           localStorage.removeItem(TOKEN_STORAGE_KEY);
           localStorage.removeItem("alight_token");
           localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
@@ -65,8 +60,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoading(false);
         });
     } else {
+      setToken(null);
+      setUser(null);
+      setRoles([]);
       setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    const savedToken =
+      localStorage.getItem(TOKEN_STORAGE_KEY) ||
+      localStorage.getItem("alight_token") ||
+      localStorage.getItem("token");
+    syncToken(savedToken);
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (
+        e.key === TOKEN_STORAGE_KEY ||
+        e.key === "alight_token" ||
+        e.key === "token" ||
+        e.key === null
+      ) {
+        const currentToken =
+          localStorage.getItem(TOKEN_STORAGE_KEY) ||
+          localStorage.getItem("alight_token") ||
+          localStorage.getItem("token");
+        syncToken(currentToken);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const login = async (payload: LoginPayload): Promise<AuthResponse> => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Store,
@@ -19,13 +19,18 @@ import { Badge } from "@/components/ui/Badge";
 import { ImageUploadDropzone } from "@/components/ui/ImageUploadDropzone";
 import { applyAsVendorApi } from "@/services/vendor-service";
 import { BusinessType, VendorApplicationPayload } from "@/types/vendor";
+import { useAuth } from "@/context/AuthContext";
+import { LoginModal } from "@/components/auth/LoginModal";
+import { RegisterModal } from "@/components/auth/RegisterModal";
 
 export default function VendorApplicationPage() {
   const router = useRouter();
+  const { user, token } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [authModal, setAuthModal] = useState<"login" | "register" | null>(null);
 
   const [formData, setFormData] = useState<VendorApplicationPayload>({
     storeName: "",
@@ -51,6 +56,18 @@ export default function VendorApplicationPage() {
     pickupPostalCode: "",
     pickupCountry: "India",
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        supportEmail: prev.supportEmail || user.email,
+        pickupContactPerson: prev.pickupContactPerson || `${user.firstName} ${user.lastName}`.trim(),
+        pickupContactPhone: prev.pickupContactPhone || user.phone || "",
+        supportPhone: prev.supportPhone || user.phone || "",
+      }));
+    }
+  }, [user]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -112,12 +129,19 @@ export default function VendorApplicationPage() {
       return;
     }
 
+    const activeToken = token || (typeof window !== "undefined" ? localStorage.getItem("alight_token") || "" : "");
+    if (!activeToken) {
+      setError("Please sign in or create an account to submit your seller application.");
+      setAuthModal("login");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const token = localStorage.getItem("alight_token") || "";
-      const res = await applyAsVendorApi(formData, token);
+      const res = await applyAsVendorApi(formData, activeToken);
       if (res.success) {
         setSuccess(true);
       } else {
@@ -634,6 +658,18 @@ export default function VendorApplicationPage() {
           </div>
         </form>
       </Card>
+
+      <LoginModal
+        isOpen={authModal === "login"}
+        onClose={() => setAuthModal(null)}
+        onSwitchToRegister={() => setAuthModal("register")}
+      />
+
+      <RegisterModal
+        isOpen={authModal === "register"}
+        onClose={() => setAuthModal(null)}
+        onSwitchToLogin={() => setAuthModal("login")}
+      />
     </div>
   );
 }

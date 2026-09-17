@@ -7,6 +7,7 @@ import {
   VendorApplicationPayload,
   UpdateVendorProfilePayload,
   UpdateBusinessDetailsPayload,
+  UpdateKycDocumentsPayload,
   CreatePickupAddressPayload,
   UpdateVendorStatusPayload,
   UpdateCommissionPayload,
@@ -53,6 +54,17 @@ export async function updateVendorBusinessDetailsApi(
   token: string
 ): Promise<ApiResponse<VendorBusinessDetails>> {
   return apiClient<VendorBusinessDetails>("/vendors/me/business-details", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+    token,
+  });
+}
+
+export async function updateKycDocumentsApi(
+  payload: UpdateKycDocumentsPayload,
+  token: string
+): Promise<ApiResponse<VendorBusinessDetails>> {
+  return apiClient<VendorBusinessDetails>("/vendors/me/kyc-documents", {
     method: "PUT",
     body: JSON.stringify(payload),
     token,

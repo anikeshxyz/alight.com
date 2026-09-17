@@ -71,8 +71,7 @@ export const VENDOR_NAV_GROUPS: NavGroup[] = [
     defaultOpen: true,
     links: [
       { label: "B2B Quotes (RFQ)", href: "/vendor/quotes", icon: Receipt },
-      { label: "Marketing & Promos", href: "/vendor/marketing", icon: Tag },
-      { label: "Sponsored Ads", href: "/vendor/advertising", icon: Megaphone, badge: "Beta" },
+      { label: "Coupons & Promos", href: "/vendor/coupons", icon: Tag },
     ],
   },
   {
@@ -104,9 +103,6 @@ export const VENDOR_NAV_GROUPS: NavGroup[] = [
     defaultOpen: false,
     links: [
       { label: "Compliance & KYC", href: "/vendor/compliance", icon: ShieldCheck },
-      { label: "Brand Registry", href: "/vendor/brand", icon: Award },
-      { label: "Team & Permissions", href: "/vendor/team", icon: Users },
-      { label: "Activity Logs", href: "/vendor/activity", icon: History },
       { label: "Store Settings", href: "/vendor/settings", icon: Settings },
     ],
   },

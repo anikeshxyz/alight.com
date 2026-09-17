@@ -12,6 +12,8 @@ import com.alight.marketplace.modules.auth.security.JwtProperties;
 import com.alight.marketplace.modules.auth.security.JwtTokenProvider;
 import com.alight.marketplace.modules.auth.service.impl.AuthServiceImpl;
 import com.alight.marketplace.modules.user.entity.Role;
+import com.alight.marketplace.modules.auth.repository.PasswordResetTokenRepository;
+import com.alight.marketplace.modules.auth.repository.EmailVerificationTokenRepository;
 import com.alight.marketplace.modules.user.entity.User;
 import com.alight.marketplace.modules.user.repository.RoleRepository;
 import com.alight.marketplace.modules.user.repository.UserRepository;
@@ -32,11 +34,14 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AuthServiceTest {
 
     @Mock
@@ -49,6 +54,12 @@ class AuthServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Mock
+    private EmailVerificationTokenRepository emailVerificationTokenRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -56,6 +67,9 @@ class AuthServiceTest {
 
     @Mock
     private JwtProperties jwtProperties;
+
+    @Mock
+    private com.alight.marketplace.modules.vendor.repository.VendorRepository vendorRepository;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -99,7 +113,7 @@ class AuthServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(sampleUser);
         when(jwtProperties.getAccessExpirationMs()).thenReturn(86400000L);
         when(jwtProperties.getRefreshExpirationMs()).thenReturn(604800000L);
-        when(jwtTokenProvider.generateToken(anyString(), any(), any())).thenReturn("mock_access_jwt");
+        when(jwtTokenProvider.generateToken(anyString(), any(), any(), any())).thenReturn("mock_access_jwt");
 
         AuthResponse response = authService.register(request);
 
@@ -139,7 +153,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches("Password123!", "hashed_pw")).thenReturn(true);
         when(jwtProperties.getAccessExpirationMs()).thenReturn(86400000L);
         when(jwtProperties.getRefreshExpirationMs()).thenReturn(604800000L);
-        when(jwtTokenProvider.generateToken(anyString(), any(), any())).thenReturn("mock_login_jwt");
+        when(jwtTokenProvider.generateToken(anyString(), any(), any(), any())).thenReturn("mock_login_jwt");
 
         AuthResponse response = authService.login(request);
 
@@ -177,7 +191,7 @@ class AuthServiceTest {
         when(userRepository.findById(sampleUser.getId())).thenReturn(Optional.of(sampleUser));
         when(jwtProperties.getAccessExpirationMs()).thenReturn(86400000L);
         when(jwtProperties.getRefreshExpirationMs()).thenReturn(604800000L);
-        when(jwtTokenProvider.generateToken(anyString(), any(), any())).thenReturn("new_access_jwt");
+        when(jwtTokenProvider.generateToken(anyString(), any(), any(), any())).thenReturn("new_access_jwt");
 
         RefreshTokenRequest request = RefreshTokenRequest.builder()
                 .refreshToken("valid-refresh-token")

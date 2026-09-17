@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { VendorSidebar } from "@/components/layout/VendorSidebar";
 import { useAuth } from "@/context/AuthContext";
-import { Store, LogOut, ArrowLeft, ShieldCheck, KeyRound, Loader2 } from "lucide-react";
+import { getCurrentVendorApi } from "@/services/vendor-service";
+import { VendorProfile } from "@/types/vendor";
+import { Store, LogOut, ArrowLeft, ShieldCheck, KeyRound, Loader2, Clock, AlertTriangle } from "lucide-react";
 
 export default function VendorLayout({
   children,
@@ -14,6 +16,32 @@ export default function VendorLayout({
   const { user, token, isVendor, login, logout } = useAuth();
   const [loggingIn, setLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [currentVendor, setCurrentVendor] = useState<VendorProfile | null>(null);
+
+  useEffect(() => {
+    async function loadVendorProfile() {
+      const activeToken = token || (typeof window !== "undefined" ? localStorage.getItem("alight_token") || "" : "");
+      if (!activeToken) {
+        setCurrentVendor(null);
+        return;
+      }
+      try {
+        const res = await getCurrentVendorApi(activeToken);
+        if (res?.success && res.data) {
+          setCurrentVendor(res.data);
+        } else {
+          setCurrentVendor(null);
+        }
+      } catch (err) {
+        setCurrentVendor(null);
+      }
+    }
+    if (token) {
+      loadVendorProfile();
+    } else {
+      setCurrentVendor(null);
+    }
+  }, [token]);
 
   const handleDemoVendorLogin = async () => {
     setLoggingIn(true);
@@ -28,9 +56,9 @@ export default function VendorLayout({
     }
   };
 
-  const vendorName = user && isVendor
+  const vendorName = currentVendor?.storeName || (user && isVendor
     ? `${user.firstName} ${user.lastName} (Seller)`
-    : "Alight Hardware Atelier";
+    : "Alight Hardware Atelier");
 
   return (
     <div className="min-h-screen bg-brand-slate-50 flex flex-col">
@@ -78,10 +106,22 @@ export default function VendorLayout({
                 </div>
               </div>
 
-              <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Verified Seller Active
-              </span>
+              {currentVendor?.status === "APPROVED" ? (
+                <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Verified Seller Active
+                </span>
+              ) : currentVendor?.status === "REJECTED" ? (
+                <span className="bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                  Verification Rejected
+                </span>
+              ) : (
+                <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-amber-600 animate-pulse" />
+                  Under Verification
+                </span>
+              )}
             </>
           )}
 
@@ -107,7 +147,28 @@ export default function VendorLayout({
       </header>
 
       {/* Unauthenticated Alert Banner */}
-      {(!token || !isVendor) && (
+      {/* Active Session & Unauthenticated Alert Banner */}
+      {user && !isVendor ? (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs text-amber-900">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              Signed in as <strong>{user.email} (Administrator)</strong>. Seller Center features require a registered seller account. To manage a seller store (such as <strong>raj anik</strong>), please sign in with that seller account.
+            </span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-amber-700 hidden lg:inline">
+              💡 Tip: Open the Admin Console in a <strong>Private / Incognito window</strong> so your seller session is not replaced.
+            </span>
+            <button
+              onClick={() => logout()}
+              className="font-bold underline hover:text-amber-950 ml-2"
+            >
+              Sign Out & Switch Account
+            </button>
+          </div>
+        </div>
+      ) : (!token || !isVendor) && (
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex items-center justify-between text-xs text-amber-900">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-500"></span>

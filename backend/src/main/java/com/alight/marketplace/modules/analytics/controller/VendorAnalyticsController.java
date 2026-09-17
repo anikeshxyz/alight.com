@@ -3,6 +3,7 @@ package com.alight.marketplace.modules.analytics.controller;
 import com.alight.marketplace.common.exception.UnauthorizedException;
 import com.alight.marketplace.common.response.ApiResponse;
 import com.alight.marketplace.modules.analytics.dto.VendorAnalyticsOverviewDTO;
+import com.alight.marketplace.modules.analytics.dto.VendorOperationalBadgesDTO;
 import com.alight.marketplace.modules.analytics.service.AnalyticsService;
 import com.alight.marketplace.modules.user.entity.User;
 import com.alight.marketplace.modules.user.repository.UserRepository;
@@ -17,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -35,11 +37,22 @@ public class VendorAnalyticsController {
     @GetMapping("/overview")
     @Operation(summary = "Get vendor sales trajectory, net earnings, and business performance metrics")
     public ResponseEntity<ApiResponse<VendorAnalyticsOverviewDTO>> getOverview(
+            @RequestParam(name = "range", required = false, defaultValue = "30d") String range,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         UUID vendorId = resolveVendorId(userDetails);
-        VendorAnalyticsOverviewDTO overview = analyticsService.getVendorAnalyticsOverview(vendorId);
+        VendorAnalyticsOverviewDTO overview = analyticsService.getVendorAnalyticsOverview(vendorId, range);
         return ResponseEntity.ok(ApiResponse.success(overview, "Vendor analytics retrieved successfully"));
+    }
+
+    @GetMapping("/badges")
+    @Operation(summary = "Get real-time operational badge counts for sidebar and action center")
+    public ResponseEntity<ApiResponse<VendorOperationalBadgesDTO>> getBadges(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        UUID vendorId = resolveVendorId(userDetails);
+        VendorOperationalBadgesDTO badges = analyticsService.getVendorOperationalBadges(vendorId);
+        return ResponseEntity.ok(ApiResponse.success(badges, "Operational badges retrieved successfully"));
     }
 
     private UUID resolveVendorId(UserDetails userDetails) {
