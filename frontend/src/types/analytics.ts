@@ -70,6 +70,7 @@ export interface VendorAnalyticsOverview {
   awaitingDispatchCount?: number | null;
   activeShipmentsCount?: number | null;
   lowStockCount?: number | null;
+  outOfStockCount?: number | null;
   pendingRmaCount?: number | null;
   pendingQuoteCount?: number | null;
 
@@ -77,4 +78,13 @@ export interface VendorAnalyticsOverview {
   topProducts?: VendorTopProduct[];
 
   monthlySales: RevenueTrajectory[];
+}
+
+export interface VendorOperationalBadges {
+  orders: number;
+  fulfillment: number;
+  lowStock: number;
+  outOfStock: number;
+  returns: number;
+  quotes: number;
 }
