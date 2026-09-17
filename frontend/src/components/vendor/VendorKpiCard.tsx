@@ -48,14 +48,14 @@ export const VendorKpiCard: React.FC<VendorKpiCardProps> = ({
       </div>
 
       <div className="mt-2.5">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-xl sm:text-2xl font-black text-brand-slate-900 tracking-tight">
+        <div className="flex items-baseline justify-between gap-2 flex-wrap sm:flex-nowrap">
+          <span className="text-lg sm:text-xl xl:text-2xl font-black text-brand-slate-900 tracking-tight tabular-nums truncate min-w-0">
             {value}
           </span>
           {secondaryMetric && (
-            <span className="text-xs font-semibold text-brand-slate-600 shrink-0">
+            <span className="text-xs font-semibold text-brand-slate-600 shrink-0 whitespace-nowrap">
               <span className="text-brand-slate-400 font-normal mr-1">{secondaryMetric.label}</span>
-              <strong className="font-bold text-brand-slate-800">{secondaryMetric.value}</strong>
+              <strong className="font-bold text-brand-slate-800 tabular-nums">{secondaryMetric.value}</strong>
             </span>
           )}
         </div>

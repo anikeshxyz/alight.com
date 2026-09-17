@@ -18,8 +18,22 @@ export const VendorBenchmarkGauges: React.FC<VendorBenchmarkGaugesProps> = ({
 }) => {
   return (
     <div
-      className={`grid grid-cols-2 gap-3 bg-white p-4 rounded-2xl border border-brand-slate-200/90 shadow-2xs ${className}`}
+      role="region"
+      aria-label="Account Health Benchmarks"
+      className={`p-4 sm:p-5 rounded-2xl bg-white border border-brand-slate-200/90 shadow-2xs space-y-3.5 ${className}`}
     >
+      <div className="flex items-center justify-between border-b border-brand-slate-100 pb-2.5">
+        <div>
+          <h3 className="text-sm font-bold text-brand-slate-900 tracking-tight">
+            Account Health
+          </h3>
+          <p className="text-[11px] text-brand-slate-500">
+            Fulfillment velocity & SLA performance
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
       {/* 1. Seller Rating */}
       <div className="p-3 bg-brand-slate-50/80 rounded-xl border border-brand-slate-100 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-amber-100/80 text-amber-800 flex items-center justify-center font-bold text-sm shrink-0">
@@ -100,5 +114,7 @@ export const VendorBenchmarkGauges: React.FC<VendorBenchmarkGaugesProps> = ({
         </div>
       </div>
     </div>
+  </div>
   );
 };
+

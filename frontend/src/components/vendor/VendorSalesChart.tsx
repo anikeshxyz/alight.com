@@ -218,14 +218,14 @@ export const VendorSalesChart: React.FC<VendorSalesChartProps> = ({
         <div
           role="radiogroup"
           aria-label="Select Active Chart Metric"
-          className="inline-flex bg-brand-slate-100 p-1 rounded-xl border border-brand-slate-200 text-xs font-semibold shrink-0 self-start sm:self-auto"
+          className="inline-flex bg-brand-slate-100 p-1 rounded-xl border border-brand-slate-200 text-xs font-semibold shrink-0 self-start sm:self-auto flex-wrap"
         >
           <button
             type="button"
             role="radio"
             aria-checked={metricMode === "ALL"}
             onClick={() => setMetricMode("ALL")}
-            className={`px-2.5 py-1 rounded-lg transition-all text-xs ${
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-all text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald-700 ${
               metricMode === "ALL"
                 ? "bg-white text-brand-slate-900 shadow-2xs font-bold"
                 : "text-brand-slate-600 hover:text-brand-slate-900"
@@ -238,7 +238,7 @@ export const VendorSalesChart: React.FC<VendorSalesChartProps> = ({
             role="radio"
             aria-checked={metricMode === "GMV"}
             onClick={() => setMetricMode("GMV")}
-            className={`px-2.5 py-1 rounded-lg transition-all text-xs ${
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-all text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald-700 ${
               metricMode === "GMV"
                 ? "bg-white text-brand-emerald-900 shadow-2xs font-bold"
                 : "text-brand-slate-600 hover:text-brand-slate-900"
@@ -252,7 +252,7 @@ export const VendorSalesChart: React.FC<VendorSalesChartProps> = ({
               role="radio"
               aria-checked={metricMode === "NET"}
               onClick={() => setMetricMode("NET")}
-              className={`px-2.5 py-1 rounded-lg transition-all text-xs ${
+              className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-all text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald-700 ${
                 metricMode === "NET"
                   ? "bg-white text-teal-900 shadow-2xs font-bold"
                   : "text-brand-slate-600 hover:text-brand-slate-900"
@@ -266,7 +266,7 @@ export const VendorSalesChart: React.FC<VendorSalesChartProps> = ({
             role="radio"
             aria-checked={metricMode === "ORDERS"}
             onClick={() => setMetricMode("ORDERS")}
-            className={`px-2.5 py-1 rounded-lg transition-all text-xs ${
+            className={`px-3 py-1.5 min-h-[36px] rounded-lg transition-all text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald-700 ${
               metricMode === "ORDERS"
                 ? "bg-white text-blue-900 shadow-2xs font-bold"
                 : "text-brand-slate-600 hover:text-brand-slate-900"
@@ -612,7 +612,7 @@ export const VendorSalesChart: React.FC<VendorSalesChartProps> = ({
                       : "translateX(-50%)",
                 }}
               >
-                <div className="bg-brand-slate-900/95 text-white backdrop-blur-md rounded-xl p-3 shadow-xl border border-white/10 text-xs min-w-[170px] space-y-2">
+                <div className="bg-brand-slate-900/95 text-white backdrop-blur-md rounded-xl p-3 shadow-2xl border border-white/10 text-xs min-w-[170px] max-w-[calc(100vw-3rem)] sm:max-w-xs space-y-2">
                   <div className="border-b border-white/10 pb-1.5 flex items-center justify-between gap-2">
                     <span className="font-bold text-white tracking-wide">
                       {activePoint.periodLabel}

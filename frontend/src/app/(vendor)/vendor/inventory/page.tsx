@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Boxes,
   RefreshCw,
@@ -34,13 +35,32 @@ import {
   StockTransferPayload,
 } from "@/types/inventory";
 
-export default function VendorInventoryPage() {
+function VendorInventoryContent() {
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get("tab");
+  const urlFilter = searchParams.get("filter");
+  const initialTab =
+    urlTab === "alerts" || urlFilter === "LOW_STOCK" || urlFilter === "OUT_OF_STOCK"
+      ? "alerts"
+      : "matrix";
+
   const [inventory, setInventory] = useState<WarehouseStock[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [lowStockAlerts, setLowStockAlerts] = useState<WarehouseStock[]>([]);
   const [transactions, setTransactions] = useState<InventoryTransaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"matrix" | "alerts" | "ledger">("matrix");
+  const [activeTab, setActiveTab] = useState<"matrix" | "alerts" | "ledger">(initialTab);
+  const [alertFilter, setAlertFilter] = useState<"ALL" | "OUT_OF_STOCK" | "LOW_STOCK">(
+    urlFilter === "OUT_OF_STOCK" ? "OUT_OF_STOCK" : urlFilter === "LOW_STOCK" ? "LOW_STOCK" : "ALL"
+  );
+
+  useEffect(() => {
+    if (urlTab === "alerts" || urlFilter === "LOW_STOCK" || urlFilter === "OUT_OF_STOCK") {
+      setActiveTab("alerts");
+      if (urlFilter === "OUT_OF_STOCK") setAlertFilter("OUT_OF_STOCK");
+      else if (urlFilter === "LOW_STOCK") setAlertFilter("LOW_STOCK");
+    }
+  }, [urlTab, urlFilter]);
 
   // Adjustment Modal
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
@@ -394,51 +414,126 @@ export default function VendorInventoryPage() {
       {/* Tab: Low Stock Warnings */}
       {activeTab === "alerts" && (
         <Card className="p-6">
-          <h2 className="font-bold text-brand-slate-900 text-sm mb-3">Reorder Threshold Triggers</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="font-bold text-brand-slate-900 text-sm">Inventory Level Alerts</h2>
+              <p className="text-[11px] text-brand-slate-500">Items reaching or falling below replenishment safety buffers</p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setAlertFilter("ALL")}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                  alertFilter === "ALL"
+                    ? "bg-brand-emerald-800 text-white"
+                    : "bg-brand-slate-100 text-brand-slate-600 hover:bg-brand-slate-200"
+                }`}
+              >
+                All Alerts ({lowStockAlerts.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setAlertFilter("OUT_OF_STOCK")}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                  alertFilter === "OUT_OF_STOCK"
+                    ? "bg-rose-600 text-white"
+                    : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                }`}
+              >
+                Out of Stock ({lowStockAlerts.filter((i) => i.quantityAvailable === 0).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setAlertFilter("LOW_STOCK")}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
+                  alertFilter === "LOW_STOCK"
+                    ? "bg-amber-600 text-white"
+                    : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                }`}
+              >
+                Low Stock ({lowStockAlerts.filter((i) => i.quantityAvailable > 0).length})
+              </button>
+            </div>
+          </div>
+
           {lowStockAlerts.length === 0 ? (
             <div className="text-center py-8 text-emerald-600 font-semibold text-xs">
               All inventory levels are healthy and above minimum safety stock buffers!
             </div>
           ) : (
             <div className="space-y-3">
-              {lowStockAlerts.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 bg-amber-50/50 border border-amber-200 rounded-xl gap-3 text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="font-bold text-brand-slate-900">{item.productTitle}</span>
-                      <div className="text-brand-slate-500 text-[11px]">
-                        Located at: <span className="font-medium text-brand-slate-800">{item.warehouseName}</span> ({item.warehouseCode})
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-amber-700 font-bold">
-                        {item.quantityAvailable} units available
-                      </div>
-                      <div className="text-[10px] text-brand-slate-400">
-                        Reorder trigger: {item.reorderThreshold} units
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => openAdjustModal(item)}
-                      className="bg-amber-600 hover:bg-amber-700 text-white"
+              {lowStockAlerts
+                .filter((item) => {
+                  if (alertFilter === "OUT_OF_STOCK") return item.quantityAvailable === 0;
+                  if (alertFilter === "LOW_STOCK") return item.quantityAvailable > 0;
+                  return true;
+                })
+                .map((item) => {
+                  const isOutOfStock = item.quantityAvailable === 0;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl gap-3 text-xs border ${
+                        isOutOfStock
+                          ? "bg-rose-50/60 border-rose-200"
+                          : "bg-amber-50/50 border-amber-200"
+                      }`}
                     >
-                      Restock Intake
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                            isOutOfStock
+                              ? "bg-rose-100 text-rose-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          <AlertTriangle className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-brand-slate-900">{item.productTitle}</span>
+                            {isOutOfStock && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 border border-rose-200">
+                                OUT OF STOCK
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-brand-slate-500 text-[11px]">
+                            Located at: <span className="font-medium text-brand-slate-800">{item.warehouseName}</span> ({item.warehouseCode})
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div
+                            className={`font-bold ${
+                              isOutOfStock ? "text-rose-700" : "text-amber-700"
+                            }`}
+                          >
+                            {item.quantityAvailable} units available
+                          </div>
+                          <div className="text-[10px] text-brand-slate-400">
+                            Reorder trigger: {item.reorderThreshold} units
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => openAdjustModal(item)}
+                          className={
+                            isOutOfStock
+                              ? "bg-rose-600 hover:bg-rose-700 text-white"
+                              : "bg-amber-600 hover:bg-amber-700 text-white"
+                          }
+                        >
+                          Restock Intake
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </Card>
@@ -696,3 +791,18 @@ export default function VendorInventoryPage() {
     </div>
   );
 }
+
+export default function VendorInventoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="w-8 h-8 border-4 border-brand-emerald-800 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <VendorInventoryContent />
+    </Suspense>
+  );
+}
+

@@ -45,8 +45,8 @@ export const VendorTopProductsTable: React.FC<VendorTopProductsTableProps> = ({
         </Link>
       </div>
 
-      {/* Table Container */}
-      <div className="overflow-x-auto -mx-5 px-5">
+      {/* Desktop & Tablet Table Container */}
+      <div className="hidden md:block overflow-x-auto -mx-5 px-5">
         <table className="w-full text-left text-xs min-w-[600px]">
           <thead>
             <tr className="border-b border-brand-slate-200 text-brand-slate-500 font-semibold">
@@ -160,6 +160,102 @@ export const VendorTopProductsTable: React.FC<VendorTopProductsTableProps> = ({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Dedicated Card List (No horizontal scrolling on phones) */}
+      <div className="block md:hidden space-y-3">
+        {topProducts.length === 0 ? (
+          <div className="py-8 text-center">
+            <VendorEmptyState
+              icon={Package}
+              title="No Sales in Selected Period"
+              description="No orders have been recorded for this timeframe yet."
+              action={{
+                label: "View Catalog",
+                href: "/vendor/products",
+              }}
+            />
+          </div>
+        ) : (
+          topProducts.map((p) => {
+            const isOutOfStock = p.status === "OUT_OF_STOCK" || p.stockQuantity === 0;
+            const isLowStock = p.status === "LOW_STOCK" || (p.stockQuantity < 10 && p.stockQuantity > 0);
+
+            return (
+              <div
+                key={p.productId || p.sku}
+                className="p-3.5 rounded-xl border border-brand-slate-200/90 bg-brand-slate-50/50 space-y-3 text-xs"
+              >
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center shrink-0 border border-brand-slate-200/80 overflow-hidden">
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <Package className="w-4 h-4 text-brand-slate-400" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-brand-slate-900 truncate">{p.title}</p>
+                      <p className="text-[10px] font-mono text-brand-slate-400 mt-0.5">
+                        SKU: {p.sku || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    {isOutOfStock ? (
+                      <Badge variant="error" size="sm" className="bg-rose-50 text-rose-800 border-rose-200 text-[10px] shrink-0">
+                        Out of Stock
+                      </Badge>
+                    ) : isLowStock ? (
+                      <Badge variant="warning" size="sm" className="bg-amber-50 text-amber-800 border-amber-200 text-[10px] shrink-0">
+                        Low Stock
+                      </Badge>
+                    ) : (
+                      <Badge variant="success" size="sm" className="bg-emerald-50 text-emerald-800 border-emerald-200 text-[10px] shrink-0">
+                        In Stock
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 py-2 px-2.5 bg-white rounded-lg border border-brand-slate-200/60 text-center">
+                  <div>
+                    <span className="text-[10px] text-brand-slate-400 block">Units Sold</span>
+                    <span className="font-bold text-brand-slate-800 font-mono text-xs">
+                      {p.unitsSold.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-brand-slate-400 block">Stock Left</span>
+                    <span className={`font-bold font-mono text-xs ${isOutOfStock ? "text-rose-600" : isLowStock ? "text-amber-600" : "text-brand-slate-800"}`}>
+                      {p.stockQuantity}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-brand-slate-400 block">Revenue</span>
+                    <span className="font-black text-brand-slate-900 text-xs">
+                      ₹{p.revenue.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-0.5 text-[11px]">
+                  <span className="text-brand-slate-500 font-medium">
+                    {p.categoryName || "General"}
+                  </span>
+                  <Link
+                    href="/vendor/products"
+                    className="font-bold text-brand-emerald-800 hover:text-brand-emerald-950 flex items-center gap-1 hover:underline min-h-[36px] py-1 px-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald-700"
+                  >
+                    <span>Manage SKU</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </Card>
   );

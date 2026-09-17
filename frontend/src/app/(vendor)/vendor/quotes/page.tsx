@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   FileText,
   Clock,
@@ -19,13 +20,21 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
-export default function VendorQuotesPage() {
+function VendorQuotesContent() {
   const { token, user } = useAuth();
   const { formatMoney } = useCurrency();
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get("status");
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>(urlStatus || "ALL");
+
+  useEffect(() => {
+    if (urlStatus && urlStatus !== statusFilter) {
+      setStatusFilter(urlStatus);
+    }
+  }, [urlStatus]);
 
   // Offer Modal State
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
@@ -325,3 +334,18 @@ export default function VendorQuotesPage() {
     </div>
   );
 }
+
+export default function VendorQuotesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="w-8 h-8 border-4 border-brand-emerald-800 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <VendorQuotesContent />
+    </Suspense>
+  );
+}
+

@@ -60,14 +60,14 @@ export const VendorDashboardHeader: React.FC<VendorDashboardHeaderProps> = ({
       </div>
 
       {/* Date Filter & Actions */}
-      <div className="flex items-center flex-wrap gap-2.5">
+      <div className="flex items-center flex-wrap gap-2 sm:gap-2.5">
         {onRefresh && (
           <Button
             variant="outline"
             size="sm"
             onClick={onRefresh}
             disabled={refreshing}
-            className="h-8 px-2.5 text-brand-slate-600 hover:text-brand-slate-900 border-brand-slate-200 text-xs"
+            className="min-h-[40px] min-w-[40px] px-2.5 text-brand-slate-600 hover:text-brand-slate-900 border-brand-slate-200 text-xs focus-visible:ring-2 focus-visible:ring-brand-emerald-700"
             title="Refresh Data"
             aria-label="Refresh Dashboard Data"
           >
@@ -89,7 +89,7 @@ export const VendorDashboardHeader: React.FC<VendorDashboardHeaderProps> = ({
                 role="radio"
                 aria-checked={isSelected}
                 onClick={() => onDateRangeChange(r)}
-                className={`px-3 py-1 rounded-lg transition-all text-xs ${
+                className={`px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-lg transition-all text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald-700 ${
                   isSelected
                     ? "bg-white text-brand-slate-900 shadow-2xs font-bold"
                     : "text-brand-slate-600 hover:text-brand-slate-900"
@@ -105,7 +105,7 @@ export const VendorDashboardHeader: React.FC<VendorDashboardHeaderProps> = ({
           <Button
             variant="primary"
             size="sm"
-            className="bg-brand-emerald-800 hover:bg-brand-emerald-900 text-white font-bold gap-1.5 shadow-sm text-xs h-8 px-3"
+            className="bg-brand-emerald-800 hover:bg-brand-emerald-900 text-white font-bold gap-1.5 shadow-sm text-xs min-h-[40px] px-3.5 flex items-center focus-visible:ring-2 focus-visible:ring-brand-emerald-700"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Product</span>

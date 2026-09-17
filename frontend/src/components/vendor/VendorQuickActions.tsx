@@ -49,7 +49,7 @@ export const VendorQuickActions: React.FC = () => {
             <Link
               key={act.href}
               href={act.href}
-              className="p-3 rounded-xl bg-brand-slate-50 hover:bg-brand-emerald-50/60 border border-brand-slate-200/80 hover:border-brand-emerald-300 font-semibold text-brand-slate-800 hover:text-brand-emerald-900 flex flex-col items-center text-center gap-1.5 transition-all group"
+              className="p-3 rounded-xl bg-brand-slate-50 hover:bg-brand-emerald-50/60 border border-brand-slate-200/80 hover:border-brand-emerald-300 font-semibold text-brand-slate-800 hover:text-brand-emerald-900 flex flex-col items-center text-center gap-1.5 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-emerald-700 min-h-[70px]"
             >
               <div className="w-8 h-8 rounded-lg bg-white group-hover:bg-brand-emerald-100/60 flex items-center justify-center text-brand-emerald-800 shadow-2xs transition-colors">
                 <Icon className="w-4 h-4" />

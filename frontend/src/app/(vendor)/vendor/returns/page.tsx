@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   RotateCcw,
   Package,
@@ -39,13 +40,22 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
-export default function VendorReturnsPage() {
+function VendorReturnsContent() {
   const { token } = useAuth();
   const { formatMoney } = useCurrency();
+  const searchParams = useSearchParams();
+  const rawStatus = searchParams.get("status");
+  const urlStatus = rawStatus === "PENDING" ? "REQUESTED" : rawStatus;
 
   const [returns, setReturns] = useState<RmaRequest[]>([]);
   const [stats, setStats] = useState<RmaStatsSummary | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<string>(urlStatus || "ALL");
+
+  useEffect(() => {
+    if (urlStatus && urlStatus !== selectedStatus) {
+      setSelectedStatus(urlStatus);
+    }
+  }, [urlStatus]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(0);
@@ -812,3 +822,18 @@ export default function VendorReturnsPage() {
     </div>
   );
 }
+
+export default function VendorReturnsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="w-8 h-8 border-4 border-brand-emerald-800 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <VendorReturnsContent />
+    </Suspense>
+  );
+}
+

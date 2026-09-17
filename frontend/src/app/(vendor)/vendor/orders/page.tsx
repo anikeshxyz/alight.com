@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Package,
   Truck,
@@ -38,14 +39,22 @@ const COURIER_PARTNERS = [
   { code: "DTDC", name: "DTDC Courier" },
 ];
 
-export default function VendorOrdersPage() {
+function VendorOrdersContent() {
   const { token, user } = useAuth();
   const { formatMoney } = useCurrency();
+  const searchParams = useSearchParams();
+  const urlStatus = searchParams.get("status");
 
   const [orders, setOrders] = useState<VendorOrder[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>(urlStatus || "ALL");
   const [selectedOrder, setSelectedOrder] = useState<VendorOrder | null>(null);
+
+  useEffect(() => {
+    if (urlStatus && urlStatus !== statusFilter) {
+      setStatusFilter(urlStatus);
+    }
+  }, [urlStatus]);
 
   // Manual Status Update Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -672,5 +681,19 @@ export default function VendorOrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function VendorOrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="w-8 h-8 border-4 border-brand-emerald-800 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <VendorOrdersContent />
+    </Suspense>
   );
 }

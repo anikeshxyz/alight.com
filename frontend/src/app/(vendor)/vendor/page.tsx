@@ -99,53 +99,70 @@ export default function VendorDashboardPage() {
   const awaitingDispatchCount = liveAnalytics?.awaitingDispatchCount ?? 0;
   const activeShipmentsCount = liveAnalytics?.activeShipmentsCount ?? 0;
   const lowStockCount = liveAnalytics?.lowStockCount ?? 0;
+  const outOfStockCount = liveAnalytics?.outOfStockCount ?? 0;
   const pendingRmaCount = liveAnalytics?.pendingRmaCount ?? 0;
   const pendingQuoteCount = liveAnalytics?.pendingQuoteCount ?? 0;
 
-  // Build authentic action items (only if backend reports > 0, zero fabricated alerts)
+  // Build authentic action items (strictly > 0, zero fabricated alerts or static deadlines)
   const actionItems: ActionItem[] = [];
   if (awaitingDispatchCount > 0) {
     actionItems.push({
       id: "act-dispatch",
       type: "CRITICAL",
-      title: "Orders Awaiting Dispatch SLA",
-      description: `${awaitingDispatchCount} order(s) require packaging and courier handover.`,
+      category: "DISPATCH",
+      title: "Orders Requiring Dispatch",
+      description: `${awaitingDispatchCount} sub-order(s) awaiting packing and courier handover.`,
       count: awaitingDispatchCount,
       actionText: "Process Orders",
-      href: "/vendor/orders",
+      href: "/vendor/orders?status=PENDING",
+    });
+  }
+  if (outOfStockCount > 0) {
+    actionItems.push({
+      id: "act-oos",
+      type: "CRITICAL",
+      category: "OUT_OF_STOCK",
+      title: "Out of Stock SKUs",
+      description: `${outOfStockCount} catalog item(s) are completely depleted and unavailable for purchase.`,
+      count: outOfStockCount,
+      actionText: "Restock Now",
+      href: "/vendor/inventory?tab=alerts&filter=OUT_OF_STOCK",
     });
   }
   if (lowStockCount > 0) {
     actionItems.push({
       id: "act-stock",
       type: "WARNING",
+      category: "LOW_STOCK",
       title: "Low Stock Warehouse Alerts",
       description: `${lowStockCount} catalog SKU(s) have fallen below safety inventory thresholds.`,
       count: lowStockCount,
-      actionText: "Restock Inventory",
-      href: "/vendor/inventory",
+      actionText: "View Inventory",
+      href: "/vendor/inventory?tab=alerts&filter=LOW_STOCK",
     });
   }
   if (pendingRmaCount > 0) {
     actionItems.push({
       id: "act-rma",
       type: "WARNING",
+      category: "RMA",
       title: "Pending RMA Return Inspections",
       description: `${pendingRmaCount} customer return(s) awaiting inspection or receipt.`,
       count: pendingRmaCount,
-      actionText: "Inspect RMA",
-      href: "/vendor/returns",
+      actionText: "Review Returns",
+      href: "/vendor/returns?status=REQUESTED",
     });
   }
   if (pendingQuoteCount > 0) {
     actionItems.push({
       id: "act-quote",
       type: "INFO",
+      category: "QUOTE",
       title: "Pending Wholesale RFQ Inquiries",
       description: `${pendingQuoteCount} custom price quotation request(s) awaiting your response.`,
       count: pendingQuoteCount,
-      actionText: "Respond to RFQ",
-      href: "/vendor/quotes",
+      actionText: "Review Quotes",
+      href: "/vendor/quotes?status=PENDING",
     });
   }
 
@@ -200,32 +217,34 @@ export default function VendorDashboardPage() {
       {/* Period Transition Indicator */}
       <div className={`transition-opacity duration-200 ${isUpdatingRange ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
         <div className="space-y-6">
+          {/* 1. Operational Command Center: Priority Action Required */}
+          <section aria-label="Operational Action Center">
+            <VendorActionCenter
+              items={actionItems}
+              isLoading={isUpdatingRange}
+              error={analyticsError}
+              onRetry={handleManualRefresh}
+            />
+          </section>
+
           {/* 2. Primary Financial & Operational KPIs */}
-          <VendorKpiGrid
-            grossSales={liveGross}
-            grossSalesDelta={liveAnalytics?.grossSalesDelta ?? null}
-            orderVolume={liveOrdersCount}
-            orderVolumeDelta={liveAnalytics?.orderVolumeDelta ?? null}
-            aov={aov}
-            pendingOrders={awaitingDispatchCount}
-            activeShipments={activeShipmentsCount}
-            pendingSettlement={liveAnalytics?.pendingEscrow ?? 0}
-            availableBalance={liveAnalytics?.availableBalance ?? 0}
-            timeframeLabel={timeframeLabel}
-          />
+          <section aria-label="Key Performance Indicators">
+            <VendorKpiGrid
+              grossSales={liveGross}
+              grossSalesDelta={liveAnalytics?.grossSalesDelta ?? null}
+              orderVolume={liveOrdersCount}
+              orderVolumeDelta={liveAnalytics?.orderVolumeDelta ?? null}
+              aov={aov}
+              pendingOrders={awaitingDispatchCount}
+              activeShipments={activeShipmentsCount}
+              pendingSettlement={liveAnalytics?.pendingEscrow ?? 0}
+              availableBalance={liveAnalytics?.availableBalance ?? 0}
+              timeframeLabel={timeframeLabel}
+            />
+          </section>
 
-          {/* 3. Operational Command Center: Priority Action Required & Quick Shortcuts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            <div className="lg:col-span-2">
-              <VendorActionCenter items={actionItems} />
-            </div>
-            <div>
-              <VendorQuickActions />
-            </div>
-          </div>
-
-          {/* 4. Sales Trajectory & Account Health Benchmarks */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* 3 & 4. Sales Trajectory & Store Health Benchmarks */}
+          <section aria-label="Sales Trajectory and Account Health" className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <div className="lg:col-span-2">
               <VendorSalesChart
                 data={liveAnalytics?.monthlySales || []}
@@ -236,7 +255,7 @@ export default function VendorDashboardPage() {
                 onRetry={handleManualRefresh}
               />
             </div>
-            <div>
+            <div className="lg:col-span-1">
               <VendorBenchmarkGauges
                 sellerRating={liveAnalytics?.averageRating ?? null}
                 fulfillmentRate={liveAnalytics?.fulfillmentRate ?? null}
@@ -244,13 +263,20 @@ export default function VendorDashboardPage() {
                 cancellationRate={liveAnalytics?.cancellationRate ?? null}
               />
             </div>
-          </div>
+          </section>
 
-          {/* 5. Authentic Top Selling Products & Real Sales Revenue */}
-          <VendorTopProductsTable
-            topProducts={liveAnalytics?.topProducts || []}
-            periodLabel={periodDisplayName}
-          />
+          {/* 5 & 6. Top Products & Secondary Quick Actions */}
+          <section aria-label="Top Products and Quick Actions" className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-2">
+              <VendorTopProductsTable
+                topProducts={liveAnalytics?.topProducts || []}
+                periodLabel={periodDisplayName}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <VendorQuickActions />
+            </div>
+          </section>
         </div>
       </div>
     </div>
