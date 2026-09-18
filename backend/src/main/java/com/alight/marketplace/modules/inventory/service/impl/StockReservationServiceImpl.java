@@ -55,6 +55,7 @@ public class StockReservationServiceImpl implements StockReservationService {
                 : null;
 
         Warehouse warehouse;
+        WarehouseStock bestMatch = null;
         if (request.getWarehouseId() != null) {
             warehouse = warehouseRepository.findById(request.getWarehouseId())
                     .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found"));
@@ -64,11 +65,49 @@ public class StockReservationServiceImpl implements StockReservationService {
                     .filter(s -> s.getVariant() == null || (variant != null && s.getVariant().getId().equals(variant.getId())))
                     .collect(Collectors.toList());
 
-            WarehouseStock bestMatch = availableStocks.stream()
+            bestMatch = availableStocks.stream()
                     .filter(s -> s.getWarehouse().isActive())
                     .filter(s -> s.getQuantityAvailable() >= request.getQuantity())
                     .max((a, b) -> Integer.compare(a.getQuantityAvailable(), b.getQuantityAvailable()))
                     .orElse(null);
+
+            if (bestMatch == null) {
+                // Fallback: Check if product or variant has inventory registered directly on entity
+                int declaredStock = (variant != null && variant.getStockQuantity() > 0)
+                        ? variant.getStockQuantity()
+                        : product.getStockQuantity();
+
+                if (declaredStock >= request.getQuantity()) {
+                    Warehouse targetWarehouse = null;
+                    if (product.getVendor() != null) {
+                        targetWarehouse = warehouseRepository.findByVendorIdAndActiveTrue(product.getVendor().getId())
+                                .stream().findFirst().orElse(null);
+                    }
+                    if (targetWarehouse == null) {
+                        targetWarehouse = warehouseRepository.findByVendorIsNullAndActiveTrue()
+                                .stream().findFirst().orElse(null);
+                    }
+                    if (targetWarehouse == null) {
+                        targetWarehouse = warehouseRepository.findAll().stream()
+                                .filter(Warehouse::isActive)
+                                .findFirst().orElse(null);
+                    }
+
+                    if (targetWarehouse != null) {
+                        WarehouseStock autoStock = WarehouseStock.builder()
+                                .warehouse(targetWarehouse)
+                                .product(product)
+                                .variant(variant)
+                                .quantityOnHand(declaredStock)
+                                .quantityReserved(0)
+                                .reorderThreshold(5)
+                                .safetyStock(2)
+                                .build();
+                        bestMatch = warehouseStockRepository.save(autoStock);
+                        log.info("Auto-provisioned warehouse stock for product {} in warehouse {}: {} units", product.getTitle(), targetWarehouse.getCode(), declaredStock);
+                    }
+                }
+            }
 
             if (bestMatch == null) {
                 throw new BadRequestException("Insufficient available stock for product: " + product.getTitle() +
@@ -84,6 +123,10 @@ public class StockReservationServiceImpl implements StockReservationService {
                 ? warehouseStockRepository.findByWarehouseAndProductAndVariantForUpdate(warehouse.getId(), product.getId(), variant.getId())
                         .orElseGet(() -> warehouseStockRepository.findByWarehouseAndProductForUpdate(warehouse.getId(), product.getId()).orElse(null))
                 : warehouseStockRepository.findByWarehouseAndProductForUpdate(warehouse.getId(), product.getId()).orElse(null);
+
+        if (stock == null) {
+            stock = bestMatch;
+        }
 
         if (stock == null) {
             stock = warehouseStockRepository.findByProductId(product.getId()).stream().findFirst().orElse(null);

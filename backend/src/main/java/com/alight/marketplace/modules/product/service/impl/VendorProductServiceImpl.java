@@ -51,6 +51,7 @@ public class VendorProductServiceImpl implements VendorProductService {
     private final BrandRepository brandRepository;
     private final ProductMapper productMapper;
     private final com.alight.marketplace.modules.inventory.repository.WarehouseStockRepository warehouseStockRepository;
+    private final com.alight.marketplace.modules.inventory.repository.WarehouseRepository warehouseRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -110,7 +111,7 @@ public class VendorProductServiceImpl implements VendorProductService {
                 .lowStockThreshold(request.getLowStockThreshold() > 0 ? request.getLowStockThreshold() : 5)
                 .hsnCode(request.getHsnCode() != null ? request.getHsnCode().trim() : null)
                 .tags(request.getTags() != null ? request.getTags().trim() : null)
-                .status(vendor.getStatus() == VendorStatus.APPROVED ? ProductStatus.PENDING_APPROVAL : ProductStatus.DRAFT)
+                .status(vendor.getStatus() == VendorStatus.APPROVED ? ProductStatus.ACTIVE : ProductStatus.DRAFT)
                 .featured(false)
                 .build();
 
@@ -146,8 +147,8 @@ public class VendorProductServiceImpl implements VendorProductService {
         }
 
         // Build SKU Variants
+        List<ProductVariant> variants = new ArrayList<>();
         if (request.getVariants() != null && !request.getVariants().isEmpty()) {
-            List<ProductVariant> variants = new ArrayList<>();
             for (var varDto : request.getVariants()) {
                 variants.add(ProductVariant.builder()
                         .product(product)
@@ -163,10 +164,22 @@ public class VendorProductServiceImpl implements VendorProductService {
                         .active(varDto.isActive())
                         .build());
             }
-            product.setVariants(variants);
+        } else {
+            // Automatically supply standard default variant so product is immediately buyable
+            variants.add(ProductVariant.builder()
+                    .product(product)
+                    .variantSku(request.getSku().trim().toUpperCase(Locale.ROOT) + "-STD")
+                    .variantName("Standard")
+                    .price(request.getBasePrice())
+                    .compareAtPrice(request.getDiscountPrice())
+                    .stockQuantity(request.getStockQuantity())
+                    .active(true)
+                    .build());
         }
+        product.setVariants(variants);
 
         Product saved = productRepository.save(product);
+        syncWarehouseStock(saved, vendor);
         log.info("Vendor {} created product: {} with ID: {}", vendor.getStoreName(), saved.getTitle(), saved.getId());
         return productMapper.toResponseDto(saved);
     }
@@ -266,13 +279,14 @@ public class VendorProductServiceImpl implements VendorProductService {
             }
         }
 
-        // Reset to review if product was rejected or active
+        // Reset to review if product was rejected
         if (product.getStatus() == ProductStatus.REJECTED) {
-            product.setStatus(ProductStatus.PENDING_APPROVAL);
+            product.setStatus(vendor.getStatus() == VendorStatus.APPROVED ? ProductStatus.ACTIVE : ProductStatus.PENDING_APPROVAL);
             product.setRejectionReason(null);
         }
 
         Product saved = productRepository.save(product);
+        syncWarehouseStock(saved, vendor);
         log.info("Vendor updated product: {} (ID: {})", saved.getTitle(), saved.getId());
         return productMapper.toResponseDto(saved);
     }
@@ -333,5 +347,60 @@ public class VendorProductServiceImpl implements VendorProductService {
             slug = baseSlug + "-" + count++;
         }
         return slug;
+    }
+
+    private void syncWarehouseStock(Product product, Vendor vendor) {
+        try {
+            com.alight.marketplace.modules.inventory.entity.Warehouse targetWarehouse = null;
+            if (vendor != null) {
+                targetWarehouse = warehouseRepository.findByVendorIdAndActiveTrue(vendor.getId())
+                        .stream().findFirst().orElse(null);
+            }
+            if (targetWarehouse == null) {
+                targetWarehouse = warehouseRepository.findByVendorIsNullAndActiveTrue()
+                        .stream().findFirst().orElse(null);
+            }
+            if (targetWarehouse == null) {
+                targetWarehouse = warehouseRepository.findAll().stream()
+                        .filter(com.alight.marketplace.modules.inventory.entity.Warehouse::isActive)
+                        .findFirst().orElse(null);
+            }
+
+            if (targetWarehouse == null) {
+                return;
+            }
+
+            final com.alight.marketplace.modules.inventory.entity.Warehouse warehouseToUse = targetWarehouse;
+
+            int productQty = product.getStockQuantity();
+            var baseStockOpt = warehouseStockRepository.findFirstByWarehouseIdAndProductIdAndVariantIsNull(warehouseToUse.getId(), product.getId());
+            com.alight.marketplace.modules.inventory.entity.WarehouseStock baseStock = baseStockOpt.orElseGet(() -> com.alight.marketplace.modules.inventory.entity.WarehouseStock.builder()
+                    .warehouse(warehouseToUse)
+                    .product(product)
+                    .variant(null)
+                    .reorderThreshold(5)
+                    .safetyStock(2)
+                    .build());
+            baseStock.setQuantityOnHand(productQty);
+            warehouseStockRepository.save(baseStock);
+
+            if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+                for (ProductVariant variant : product.getVariants()) {
+                    int variantQty = variant.getStockQuantity();
+                    var variantStockOpt = warehouseStockRepository.findByWarehouseIdAndProductIdAndVariantId(warehouseToUse.getId(), product.getId(), variant.getId());
+                    com.alight.marketplace.modules.inventory.entity.WarehouseStock variantStock = variantStockOpt.orElseGet(() -> com.alight.marketplace.modules.inventory.entity.WarehouseStock.builder()
+                            .warehouse(warehouseToUse)
+                            .product(product)
+                            .variant(variant)
+                            .reorderThreshold(5)
+                            .safetyStock(2)
+                            .build());
+                    variantStock.setQuantityOnHand(variantQty);
+                    warehouseStockRepository.save(variantStock);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to automatically sync warehouse stock for product {}: {}", product.getId(), e.getMessage());
+        }
     }
 }

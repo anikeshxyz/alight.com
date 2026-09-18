@@ -252,7 +252,7 @@ export default function ProductDetailPage() {
     ? (variantAvailableQty !== null ? variantAvailableQty : productAvailableQty)
     : productAvailableQty;
 
-  const inStock = product.status === "ACTIVE" &&
+  const inStock = (product.status === "ACTIVE" || product.status === "PENDING_APPROVAL") &&
     (product.stockQuantity ?? 0) > 0 &&
     product.inStock !== false &&
     effectiveAvailableQty > 0 &&

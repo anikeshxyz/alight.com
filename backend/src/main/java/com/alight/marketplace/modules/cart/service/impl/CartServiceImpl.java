@@ -530,7 +530,10 @@ public class CartServiceImpl implements CartService {
     }
 
     private int calculateAvailableStock(Product product, ProductVariant variant) {
-        if (product == null || product.getStatus() != ProductStatus.ACTIVE) {
+        if (product == null) {
+            return 0;
+        }
+        if (product.getStatus() != ProductStatus.ACTIVE && product.getStatus() != ProductStatus.PENDING_APPROVAL) {
             return 0;
         }
         if (product.getStockQuantity() <= 0) {
@@ -548,9 +551,8 @@ public class CartServiceImpl implements CartService {
             warehouseAvailable = warehouseStockRepository.sumAvailableStockByProduct(product.getId());
         }
 
-        boolean hasWarehouseRecords = !warehouseStockRepository.findByProductId(product.getId()).isEmpty();
-        if (hasWarehouseRecords) {
-            return Math.max(0, warehouseAvailable);
+        if (warehouseAvailable > 0) {
+            return warehouseAvailable;
         }
 
         int fallback = variant != null && variant.getStockQuantity() > 0 ? variant.getStockQuantity() : product.getStockQuantity();

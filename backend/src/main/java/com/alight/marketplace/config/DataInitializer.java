@@ -90,37 +90,11 @@ public class DataInitializer implements CommandLineRunner {
                 "compliance:read", "compliance:verify", "risk:read", "risk:manage", "vendor:profile_read"
         ));
 
-        // 3. Seed Users
+        // 3. Seed Admin Users (Test users, test vendors, and test sales are excluded)
         String encodedPassword = passwordEncoder.encode("password123");
 
         seedUser("superadmin@alight.com", encodedPassword, "Alight", "SuperAdmin", "+919876543209", Set.of(superAdminRole, adminRole, customerRole));
-        User adminUser = seedUser("admin@alight.com", encodedPassword, "Alight", "Admin", "+919876543210", Set.of(adminRole, customerRole));
-        User sellerUser = seedUser("seller@alight.com", encodedPassword, "Vikram", "Sharma", "+919876543211", Set.of(vendorRole, customerRole));
-        User luxeUser = seedUser("luxe.seller@alight.com", encodedPassword, "Priya", "Mehta", "+919876543212", Set.of(customerRole));
-        seedUser("customer@alight.com", encodedPassword, "Rahul", "Verma", "+919876543213", Set.of(customerRole));
-
-        // 3. Seed Vendors
-        Vendor approvedVendor = seedVendor(
-                sellerUser,
-                "Alight Hardware Atelier",
-                "alight-hardware-atelier",
-                "Direct manufacturer of precision German-engineered architectural hardware, modular kitchen pull-outs, and luxury solid brass bath accessories.",
-                "atelier@alight.com",
-                "+919876543211",
-                new BigDecimal("8.50"),
-                VendorStatus.APPROVED
-        );
-
-        seedVendor(
-                luxeUser,
-                "Luxe Fittings Studio",
-                "luxe-fittings-studio",
-                "Bespoke European imported wardrobe organizers and acoustic sliding partitions.",
-                "support@luxefittings.com",
-                "+919876543212",
-                new BigDecimal("10.00"),
-                VendorStatus.PENDING_VERIFICATION
-        );
+        seedUser("admin@alight.com", encodedPassword, "Alight", "Admin", "+919876543210", Set.of(adminRole, customerRole));
 
         // 4. Seed Category Hierarchy
         Category kitchen = seedCategory(null, "Kitchen Accessories", "kitchen-accessories", "Premium modular kitchen wire baskets, carousel units, and pantry organizers.", 1);
@@ -147,209 +121,7 @@ public class DataInitializer implements CommandLineRunner {
         Brand kohler = seedBrand("Kohler", "kohler", "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=200&q=80", "https://www.kohler.com", "Global benchmark in luxury kitchen and bath plumbing craftsmanship.");
         Brand alightAtelier = seedBrand("Alight Atelier", "alight-atelier", "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=200&q=80", "https://alight.com", "Handcrafted signature line of solid brass architectural fixtures and bespoke organizers.");
 
-        // 6. Seed Products
-        if (!productRepository.findBySlug("modular-ss304-soft-close-kitchen-pull-out-basket").isPresent()) {
-            // Product 1
-            seedProduct(
-                    approvedVendor,
-                    kitchenBaskets,
-                    hafele,
-                    "Modular SS304 Soft-Close Kitchen Pull-Out Basket",
-                    "modular-ss304-soft-close-kitchen-pull-out-basket",
-                    "Heavy-duty 2-tier stainless steel spice and bottle pull-out rack with synchronized soft-closing concealed runners.",
-                    "Crafted from food-grade AISI-304 stainless steel with electro-polished chrome finish. Features 45kg load-rated synchronized soft-close bottom runners ensuring vibration-free movement even under full load. Tool-free clip-on basket assembly with adjustable dividers.",
-                    new BigDecimal("4899.00"),
-                    new BigDecimal("3999.00"),
-                    "ALT-KTC-001",
-                    85,
-                    ProductStatus.ACTIVE,
-                    true,
-                    List.of(
-                            "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80",
-                            "https://images.unsplash.com/photo-1556909212-d5b604d0c90d?auto=format&fit=crop&w=1000&q=80"
-                    ),
-                    Map.of(
-                            "Material", "Food Grade SS304 Stainless Steel",
-                            "Load Capacity", "45 kg Synchronized Bottom Slides",
-                            "Warranty", "10 Years Manufacturer Warranty"
-                    ),
-                    List.of(
-                            Map.entry("200mm Width Carcass", new BigDecimal("3999.00")),
-                            Map.entry("300mm Width Carcass", new BigDecimal("4499.00"))
-                    )
-            );
-
-            // Product 2
-            seedProduct(
-                    approvedVendor,
-                    cabinetHandles,
-                    alightAtelier,
-                    "Artisan Knurled Solid Brass Cabinet Pull Handle",
-                    "artisan-knurled-solid-brass-cabinet-pull-handle",
-                    "Diamond knurled precision-machined solid brass T-bar handle for luxury kitchen cabinetry and wardrobes.",
-                    "Individually lathe-machined from single-billet C36000 solid architectural brass. Finished with baked clear nano-lacquer to prevent tarnishing while maintaining the tactile brilliance of the diamond cut knurling. Includes M4 breakaway mounting screws.",
-                    new BigDecimal("1250.00"),
-                    new BigDecimal("999.00"),
-                    "ALT-HND-002",
-                    250,
-                    ProductStatus.ACTIVE,
-                    true,
-                    List.of(
-                            "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1000&q=80",
-                            "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1000&q=80"
-                    ),
-                    Map.of(
-                            "Material", "Solid Forged C36000 Architectural Brass",
-                            "Center-to-Center", "160 mm / 6.3 inches",
-                            "Finish Coating", "Electrostatically Baked Anti-Tarnish Clear Lacquer"
-                    ),
-                    List.of(
-                            Map.entry("128mm Hole Center - Satin Brass", new BigDecimal("899.00")),
-                            Map.entry("160mm Hole Center - Satin Brass", new BigDecimal("999.00")),
-                            Map.entry("224mm Hole Center - Antique Bronze", new BigDecimal("1199.00"))
-                    )
-            );
-
-            // Product 3
-            seedProduct(
-                    approvedVendor,
-                    towelRails,
-                    kohler,
-                    "Kohler Architectural Matte Black Double Towel Bar 24\"",
-                    "kohler-architectural-matte-black-double-towel-bar-24",
-                    "Architectural grade matte black 24-inch double towel bar with concealed dual-anchor mounting.",
-                    "Designed with clean geometric lines and premium corrosion-resistant PVD finish. Tested against 480-hour salt spray benchmarks to ensure lifetime endurance in high-humidity luxury bathrooms. Concealed hardware prevents visible screws.",
-                    new BigDecimal("3450.00"),
-                    new BigDecimal("2890.00"),
-                    "ALT-BTH-003",
-                    40,
-                    ProductStatus.ACTIVE,
-                    false,
-                    List.of("https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1000&q=80"),
-                    Map.of(
-                            "Material", "Solid Brass Core with PVD Coating",
-                            "Length", "24 Inches (610 mm)",
-                            "Finish", "Matte Black PVD"
-                    ),
-                    List.of(
-                            Map.entry("24 Inch - Matte Black", new BigDecimal("2890.00")),
-                            Map.entry("24 Inch - Brushed Gold", new BigDecimal("3290.00"))
-                    )
-            );
-
-            // Product 4
-            seedProduct(
-                    approvedVendor,
-                    jewelryTrays,
-                    hafele,
-                    "Modular Suede Velvet Watch & Jewelry Insert",
-                    "modular-suede-velvet-watch-jewelry-insert",
-                    "Custom-fit wardrobe drawer organizer wrapped in anti-tarnish micro-suede with dedicated watch pillows.",
-                    "Transform standard wardrobe drawers into a bespoke luxury boutique display. Includes 6 cushioned watch slots, 12 ring rolls, and 8 versatile accessory compartments lined with soft-touch champagne velvet.",
-                    new BigDecimal("2750.00"),
-                    new BigDecimal("2200.00"),
-                    "ALT-WRD-004",
-                    60,
-                    ProductStatus.ACTIVE,
-                    true,
-                    List.of("https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1000&q=80"),
-                    Map.of(
-                            "Material", "Engineered MDF wrapped in Anti-Tarnish Suede",
-                            "Dimensions", "450 mm (W) x 480 mm (D) x 60 mm (H)"
-                    ),
-                    List.of(
-                            Map.entry("Standard 6-Slot Grid", new BigDecimal("2200.00"))
-                    )
-            );
-
-            // Product 5
-            seedProduct(
-                    approvedVendor,
-                    magicCorners,
-                    hettich,
-                    "Hettich LeMans II Soft-Close Corner Carousel",
-                    "hettich-lemans-ii-soft-close-corner-carousel",
-                    "Ergonomic 2-shelf blind corner swinging carousel unit with non-slip arena anthracite trays.",
-                    "Swings all shelf contents smoothly out of the blind kitchen corner cabinet with 25kg load capacity per tray. Soft-closing damping integrated in the pivot arm ensures silent operation.",
-                    new BigDecimal("18500.00"),
-                    new BigDecimal("15990.00"),
-                    "ALT-KTC-005",
-                    15,
-                    ProductStatus.ACTIVE,
-                    true,
-                    List.of("https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1000&q=80"),
-                    Map.of(
-                            "Opening Angle", "85-degree Door Clearance",
-                            "Cabinet Width", "900 mm - 1000 mm Blind Corner",
-                            "Tray Capacity", "25 kg per tray (50 kg total)"
-                    ),
-                    List.of(
-                            Map.entry("Left Swivel Orientation", new BigDecimal("15990.00")),
-                            Map.entry("Right Swivel Orientation", new BigDecimal("15990.00"))
-                    )
-            );
-
-            // Product 6: Pending Approval item for testing Admin Moderation Queue
-            seedProduct(
-                    approvedVendor,
-                    concealedHinges,
-                    blum,
-                    "Blum CLIP top BLUMOTION 110 Soft-Close Hinge (Pack of 10)",
-                    "blum-clip-top-blumotion-110-hinge-pack-of-10",
-                    "All-metal nickel-plated 110-degree concealed hinge with integrated BLUMOTION soft-close in hinge boss.",
-                    "Provides seamless door motion with integrated deactivation switch for lighter doors. Features 3-dimensional adjustment (+/-2mm side, depth, height) and tool-free CLIP assembly.",
-                    new BigDecimal("3800.00"),
-                    new BigDecimal("3200.00"),
-                    "ALT-BLM-006",
-                    100,
-                    ProductStatus.PENDING_APPROVAL,
-                    false,
-                    List.of("https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=1000&q=80"),
-                    Map.of(
-                            "Material", "Nickel-Plated Cold-Rolled Steel",
-                            "Opening Angle", "110 Degrees",
-                            "Mounting", "Tool-free CLIP mounting"
-                    ),
-                    List.of(
-                            Map.entry("Pack of 10 Hinges", new BigDecimal("3200.00"))
-                    )
-            );
-        }
-
-        Warehouse delhiHub = seedWarehouse(
-                approvedVendor,
-                "Delhi NCR Primary Dispatch Hub",
-                "WH-DEL-NCR-01",
-                "Gopal Logistics Dispatcher",
-                "+919876543211",
-                "dispatch.delhi@alight.com",
-                "Plot 42, Alight Industrial Park, Sector 58",
-                "Gurugram",
-                "Haryana",
-                "122001",
-                "IN",
-                new BigDecimal("28.4595000"),
-                new BigDecimal("77.0266000"),
-                true
-        );
-
-        Warehouse mumbaiHub = seedWarehouse(
-                approvedVendor,
-                "Mumbai West Coast Logistics Center",
-                "WH-MUM-WST-02",
-                "Mahesh Patil",
-                "+919876543214",
-                "dispatch.mumbai@alight.com",
-                "Unit 12, Kalher Logistics Park, Bhiwandi",
-                "Mumbai",
-                "Maharashtra",
-                "421302",
-                "IN",
-                new BigDecimal("19.2813000"),
-                new BigDecimal("73.0483000"),
-                false
-        );
-
+        // 6. Seed Platform Central Fulfillment Center
         Warehouse centralHub = seedWarehouse(
                 null, // Platform fulfillment center
                 "Alight Central Platform Fulfillment Center",
@@ -367,18 +139,6 @@ public class DataInitializer implements CommandLineRunner {
                 true
         );
 
-        // Distribute stock across warehouses for active products if missing
-        List<Product> products = productRepository.findAll();
-        for (Product p : products) {
-            if (warehouseStockRepository.findFirstByWarehouseIdAndProductIdAndVariantIsNull(delhiHub.getId(), p.getId()).isEmpty()) {
-                int onHand = Math.max(20, p.getStockQuantity());
-                int delhiQty = (int) Math.round(onHand * 0.6);
-                int mumbaiQty = onHand - delhiQty;
-
-                seedStock(delhiHub, p, delhiQty, 10, 5);
-                seedStock(mumbaiHub, p, mumbaiQty, 8, 3);
-            }
-        }
 
         // 8. Seed Tax Categories
         if (taxCategoryRepository.count() == 0) {

@@ -135,18 +135,19 @@ public class CheckoutServiceImpl implements CheckoutService {
         // 1. Stock Reservation Hold (15 minutes)
         String reservationToken = "RES-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         for (CartItem ci : cartItems) {
+            UUID variantId = ci.getVariant() != null ? ci.getVariant().getId() : null;
             try {
                 stockReservationService.createReservation(
                         StockReservationRequest.builder()
                                 .productId(ci.getProduct().getId())
-                                .variantId(ci.getVariant().getId())
+                                .variantId(variantId)
                                 .quantity(ci.getQuantity())
                                 .reservationToken(reservationToken)
                                 .build(),
                         customerEmail
                 );
             } catch (Exception e) {
-                log.error("Inventory reservation failed for product {} variant {}: {}", ci.getProduct().getTitle(), ci.getVariant().getId(), e.getMessage());
+                log.error("Inventory reservation failed for product {} variant {}: {}", ci.getProduct().getTitle(), variantId, e.getMessage());
                 stockReservationService.cancelReservation(reservationToken);
                 throw new BadRequestException("Checkout cannot proceed: " + e.getMessage());
             }
@@ -239,34 +240,36 @@ public class CheckoutServiceImpl implements CheckoutService {
                 Product p = ci.getProduct();
                 ProductVariant pv = ci.getVariant();
 
-                BigDecimal regularPrice = pv.getPrice();
+                BigDecimal regularPrice = (pv != null && pv.getPrice() != null) ? pv.getPrice() : p.getBasePrice();
                 BigDecimal unitPrice = regularPrice;
                 BigDecimal lineDiscount = BigDecimal.ZERO;
 
-                try {
-                    PriceCalculationResponse pRes = pricingService.calculatePrice(
-                            PriceCalculationRequest.builder()
-                                    .variantId(pv.getId())
-                                    .quantity(ci.getQuantity())
-                                    .build()
-                    );
-                    if (pRes != null && pRes.getEffectiveUnitPrice() != null) {
-                        unitPrice = pRes.getEffectiveUnitPrice();
-                        if (regularPrice.compareTo(unitPrice) > 0) {
-                            lineDiscount = regularPrice.subtract(unitPrice).multiply(BigDecimal.valueOf(ci.getQuantity()));
+                if (pv != null) {
+                    try {
+                        PriceCalculationResponse pRes = pricingService.calculatePrice(
+                                PriceCalculationRequest.builder()
+                                        .variantId(pv.getId())
+                                        .quantity(ci.getQuantity())
+                                        .build()
+                        );
+                        if (pRes != null && pRes.getEffectiveUnitPrice() != null) {
+                            unitPrice = pRes.getEffectiveUnitPrice();
+                            if (regularPrice.compareTo(unitPrice) > 0) {
+                                lineDiscount = regularPrice.subtract(unitPrice).multiply(BigDecimal.valueOf(ci.getQuantity()));
+                            }
                         }
+                    } catch (Exception e) {
+                        log.debug("Pricing error for variant {}: {}", pv.getId(), e.getMessage());
                     }
-                } catch (Exception e) {
-                    log.debug("Pricing error for variant {}: {}", pv.getId(), e.getMessage());
                 }
 
                 BigDecimal lineSubtotal = unitPrice.multiply(BigDecimal.valueOf(ci.getQuantity())).setScale(2, RoundingMode.HALF_UP);
 
                 BigDecimal taxRate = BigDecimal.valueOf(18.00);
+                BigDecimal lineTax = BigDecimal.ZERO;
                 BigDecimal cgst = BigDecimal.ZERO;
                 BigDecimal sgst = BigDecimal.ZERO;
                 BigDecimal igst = BigDecimal.ZERO;
-                BigDecimal lineTax = BigDecimal.ZERO;
 
                 try {
                     TaxCalculationResponse taxRes = taxCalculationService.calculateTax(
@@ -317,9 +320,9 @@ public class CheckoutServiceImpl implements CheckoutService {
                         .product(p)
                         .variant(pv)
                         .productTitle(p.getTitle())
-                        .variantName(pv.getVariantName())
-                        .sku(pv.getVariantSku())
-                        .imageUrl(primaryImage)
+                        .variantName(pv != null ? pv.getVariantName() : "Standard")
+                        .sku(pv != null && pv.getVariantSku() != null ? pv.getVariantSku() : p.getSku())
+                        .imageUrl(pv != null && pv.getImageUrl() != null ? pv.getImageUrl() : primaryImage)
                         .quantity(ci.getQuantity())
                         .unitPrice(unitPrice)
                         .subtotal(lineSubtotal)

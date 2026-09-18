@@ -69,20 +69,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
         )}
 
-        {/* Demo Fast Fill Presets */}
+        {/* Admin Fast Fill Presets */}
         <div className="p-2.5 bg-brand-slate-50 border border-brand-slate-200 rounded-xl space-y-1.5">
           <p className="text-[10px] font-bold text-brand-slate-500 uppercase tracking-wider">
-            Quick Fill Demo Accounts:
+            Quick Fill Admin Accounts:
           </p>
-          <div className="grid grid-cols-3 gap-1.5">
-            <button
-              type="button"
-              onClick={() => setDemoCredentials("seller@alight.com")}
-              className="px-2 py-1.5 bg-white border border-brand-slate-200 rounded-lg text-[11px] font-semibold text-emerald-800 hover:bg-emerald-50 hover:border-emerald-300 flex items-center justify-center gap-1 transition-colors"
-            >
-              <Store className="w-3 h-3" />
-              <span>Seller</span>
-            </button>
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={() => setDemoCredentials("admin@alight.com")}
@@ -93,11 +85,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setDemoCredentials("customer@alight.com")}
-              className="px-2 py-1.5 bg-white border border-brand-slate-200 rounded-lg text-[11px] font-semibold text-brand-slate-700 hover:bg-slate-100 hover:border-slate-300 flex items-center justify-center gap-1 transition-colors"
+              onClick={() => setDemoCredentials("superadmin@alight.com")}
+              className="px-2 py-1.5 bg-white border border-brand-slate-200 rounded-lg text-[11px] font-semibold text-brand-emerald-800 hover:bg-emerald-50 hover:border-emerald-300 flex items-center justify-center gap-1 transition-colors"
             >
-              <UserIcon className="w-3 h-3" />
-              <span>Customer</span>
+              <ShieldCheck className="w-3 h-3" />
+              <span>Super Admin</span>
             </button>
           </div>
         </div>
